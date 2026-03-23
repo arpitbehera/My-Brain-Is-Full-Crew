@@ -86,10 +86,27 @@ if [[ $EXISTING -eq 1 ]]; then
   fi
 fi
 
-# ── Copy agents ─────────────────────────────────────────────────────────────
+# ── Deprecate stale core agents on reinstall ─────────────────────────────
 echo ""
-info "Creating .claude/agents/ in vault..."
 mkdir -p "$VAULT_DIR/.claude/agents"
+OLD_MANIFEST="$VAULT_DIR/.claude/agents/.core-manifest"
+if [[ $EXISTING -eq 1 && -f "$OLD_MANIFEST" ]]; then
+  while IFS= read -r old_name; do
+    [[ -z "$old_name" ]] && continue
+    [[ -f "$REPO_DIR/agents/$old_name" ]] && continue
+    vault_file="$VAULT_DIR/.claude/agents/$old_name"
+    [[ -f "$vault_file" ]] || continue
+    deprecated_name="${old_name%.md}-DEPRECATED.md"
+    [[ -f "$VAULT_DIR/.claude/agents/$deprecated_name" ]] && continue
+    mv "$vault_file" "$VAULT_DIR/.claude/agents/$deprecated_name"
+    { echo "########"; echo "DEPRECATED DO NOT USE"; echo "########"; echo ""; cat "$VAULT_DIR/.claude/agents/$deprecated_name"; } > "$VAULT_DIR/.claude/agents/$deprecated_name.tmp"
+    mv "$VAULT_DIR/.claude/agents/$deprecated_name.tmp" "$VAULT_DIR/.claude/agents/$deprecated_name"
+    warn "Deprecated stale agent: $old_name -> $deprecated_name"
+  done < "$OLD_MANIFEST"
+fi
+
+# ── Copy agents ─────────────────────────────────────────────────────────────
+info "Creating .claude/agents/ in vault..."
 
 AGENT_COUNT=0
 : > "$VAULT_DIR/.claude/agents/.core-manifest"
