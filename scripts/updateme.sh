@@ -61,29 +61,10 @@ if [[ ! "$UPDATE_ANSWER" =~ ^[Cc]$ ]]; then
 fi
 echo ""
 
-# ── Update agents ───────────────────────────────────────────────────────────
-AGENT_COUNT=0
-: > "$VAULT_DIR/.claude/agents/.core-manifest"
-for agent in "$REPO_DIR/agents/"*.md; do
-  name="$(basename "$agent")"
-  basename "$agent" >> "$VAULT_DIR/.claude/agents/.core-manifest"
-  if [[ -f "$VAULT_DIR/.claude/agents/$name" ]]; then
-    if ! diff -q "$agent" "$VAULT_DIR/.claude/agents/$name" >/dev/null 2>&1; then
-      cp "$agent" "$VAULT_DIR/.claude/agents/"
-      info "Updated $name"
-      AGENT_COUNT=$((AGENT_COUNT + 1))
-    fi
-  else
-    cp "$agent" "$VAULT_DIR/.claude/agents/"
-    info "Added $name (new agent)"
-    AGENT_COUNT=$((AGENT_COUNT + 1))
-  fi
-done
-
 # ── Deprecate removed core agents ─────────────────────────────────────────
-# Only deprecate agents that were previously installed as core agents.
-# The .core-manifest file (written by launchme/updateme) records which files
-# are core. Custom agents are never in the manifest, so they're never touched.
+# Read the OLD manifest first (before rewriting it) so we know which files
+# were previously installed as core. Agents removed from the repo will still
+# be in the old manifest and can be correctly deprecated.
 MANIFEST="$VAULT_DIR/.claude/agents/.core-manifest"
 DEPRECATED_COUNT=0
 for vault_agent in "$VAULT_DIR/.claude/agents/"*.md; do
@@ -109,6 +90,25 @@ for vault_agent in "$VAULT_DIR/.claude/agents/"*.md; do
   # Remove deprecated agent from manifest
   if [[ -f "$MANIFEST" ]]; then
     grep -vxF "$name" "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
+  fi
+done
+
+# ── Update agents and rewrite manifest ────────────────────────────────────
+AGENT_COUNT=0
+: > "$VAULT_DIR/.claude/agents/.core-manifest"
+for agent in "$REPO_DIR/agents/"*.md; do
+  name="$(basename "$agent")"
+  basename "$agent" >> "$VAULT_DIR/.claude/agents/.core-manifest"
+  if [[ -f "$VAULT_DIR/.claude/agents/$name" ]]; then
+    if ! diff -q "$agent" "$VAULT_DIR/.claude/agents/$name" >/dev/null 2>&1; then
+      cp "$agent" "$VAULT_DIR/.claude/agents/"
+      info "Updated $name"
+      AGENT_COUNT=$((AGENT_COUNT + 1))
+    fi
+  else
+    cp "$agent" "$VAULT_DIR/.claude/agents/"
+    info "Added $name (new agent)"
+    AGENT_COUNT=$((AGENT_COUNT + 1))
   fi
 done
 
