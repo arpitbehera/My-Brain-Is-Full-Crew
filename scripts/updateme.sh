@@ -98,6 +98,8 @@ for vault_agent in "$VAULT_DIR/.claude/agents/"*.md; do
     continue
   fi
   deprecated_name="${name%.md}-DEPRECATED.md"
+  # Skip if already deprecated in a previous run
+  [[ -f "$VAULT_DIR/.claude/agents/$deprecated_name" ]] && continue
   mv "$vault_agent" "$VAULT_DIR/.claude/agents/$deprecated_name"
   # Prepend deprecation header
   { echo "########"; echo "DEPRECATED DO NOT USE"; echo "########"; echo ""; cat "$VAULT_DIR/.claude/agents/$deprecated_name"; } > "$VAULT_DIR/.claude/agents/$deprecated_name.tmp"
