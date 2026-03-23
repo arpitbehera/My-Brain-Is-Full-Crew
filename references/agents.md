@@ -122,7 +122,7 @@ When an agent detects work for another agent, it includes a `### Suggested next 
 
 ## Custom Agents
 
-Custom agents are created by the Architect and live in `.claude/agents/` alongside the core agents. They follow the same conventions: YAML frontmatter, multilingual triggers, inter-agent coordination sections, and dispatcher-driven orchestration.
+Custom agents are created by the Architect and live in `.claude/agents/` alongside the core agents. They follow the same conventions: YAML frontmatter, trigger phrases written in the user's language, inter-agent coordination sections, and dispatcher-driven orchestration.
 
 For the definitive list of all agents (core + custom) with capabilities, inputs, outputs, and status, see `.claude/references/agents-registry.md`.
 
