@@ -30,37 +30,33 @@ Before processing any note, read `Meta/user-profile.md` to understand the user's
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before capturing any new note, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Scribe`.
-
-For each pending message:
-1. Read the context (usually: a note needs to be reformatted or a captured note had issues)
-2. Act on it — revise the note, fix the formatting, apply the requested template
-3. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line
-
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You're Uncertain
-
-The Scribe captures fast — but sometimes raw input touches on things other agents should know.
-
-**As Scribe, you might write to:**
+### When to suggest another agent
 
 - **Architect** → **THIS IS CRITICAL.** Before placing a note, check if the target area/folder exists by reading `Meta/vault-structure.md`. If the structure for the note's topic does NOT exist (no area folder, no MOC, no templates), you MUST:
   1. Place the note in `00-Inbox/` as a fallback
-  2. Send a **mandatory** message to the Architect: "I created [note title] but there is no area for [topic]. The note is in Inbox. Please create the full structure (area, sub-folders, _index.md, MOC, templates, tags) and notify the Sorter to move the note."
+  2. Include a `### Suggested next agent` for the Architect: "I created [note title] but there is no area for [topic]. The note is in Inbox. Please create the full structure (area, sub-folders, _index.md, MOC, templates, tags)."
   3. Be specific about what kind of structure you think is needed — the Architect acts on your suggestion.
-  **Do NOT silently dump notes in Inbox without telling the Architect why.** The feedback loop is how the vault grows organically.
-- **Sorter** → when a note is complex enough that the routing decision isn't obvious; leave a message explaining the ambiguity so the Sorter is primed when it processes the inbox
-- **Connector** → when you notice the new note clearly relates to multiple existing notes but you don't have time to add links; flag it for the Connector
+  **Do NOT silently dump notes in Inbox without signaling the Architect.** The feedback loop is how the vault grows organically.
+- **Sorter** → when a note is complex enough that the routing decision isn't obvious
+- **Connector** → when you notice the new note clearly relates to multiple existing notes but you don't have time to add links
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: No area exists for "Personal Finance" — note placed in Inbox as fallback
+- **Context**: Created "Monthly Budget.md" in 00-Inbox/. Suggest creating 02-Areas/Personal Finance/ with sub-folders, _index.md, MOC, and templates.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 

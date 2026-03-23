@@ -29,7 +29,7 @@ Have an idea for a 9th agent? Open an issue with:
 - **Triggers**: when should it activate? (include phrases in multiple languages)
 - **Tool access**: which tools does it need? (Read, Write, Edit, Bash, Glob, Grep)
 - **Vault integration**: which folders does it read/write?
-- **Inter-agent messages**: which other agents should it communicate with?
+- **Inter-agent coordination**: which other agents should it suggest chaining to?
 - **Why it matters**: what gap in the current crew does it fill?
 
 ### Add usage examples
@@ -81,15 +81,15 @@ model: sonnet
 1. **Write in English.** All agent instructions are in English. Agents respond in the user's language automatically.
 2. **Multilingual triggers.** The `description` field should include natural trigger phrases in at least English and Italian, ideally more languages.
 3. **Read user profile.** Agents should read `Meta/user-profile.md` for personalization. Never hardcode personal data.
-4. **Inter-agent messaging.** Every agent must include the messaging protocol section. See `references/inter-agent-messaging.md`.
+4. **Inter-agent coordination.** Every agent must include the coordination section with `### Suggested next agent` output format. See `references/agent-orchestration.md`.
 5. **Conservative by default.** Agents never delete, always archive. They ask before making structural decisions.
 6. **Minimal tools.** Only grant the tools the agent actually needs. Read-only agents should use `disallowedTools: Write, Edit`.
 
 ---
 
-## Inter-agent messaging
+## Inter-agent coordination
 
-Agents communicate through `Meta/agent-messages.md` in the user's vault. The protocol is documented in `references/inter-agent-messaging.md`. If your new or improved agent needs to communicate with existing ones, follow that protocol.
+Agents coordinate through a dispatcher-driven orchestration system. When an agent detects work for another agent, it includes a `### Suggested next agent` section in its output. The dispatcher reads this and chains the next agent automatically. The protocol is documented in `references/agent-orchestration.md` and the agent registry is at `references/agents-registry.md`. If your new or improved agent needs to coordinate with existing ones, follow that protocol.
 
 ---
 

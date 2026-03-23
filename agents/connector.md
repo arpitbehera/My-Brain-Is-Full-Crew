@@ -32,35 +32,30 @@ Before analyzing connections, read `Meta/user-profile.md` to understand the user
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before analyzing any links or connections, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Connector`.
-
-For each pending message:
-1. Read the context (usually: "these notes were recently filed and need linking")
-2. Perform the connection analysis for the mentioned notes
-3. Apply approved links or present suggestions
-4. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line
-
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You Spot Deeper Issues
-
-During link analysis, you often uncover things beyond just missing links.
-
-**As Connector, you might write to:**
+### When to suggest another agent
 
 - **Architect** → **MANDATORY.** When you find: (1) a cluster of 3+ interconnected notes with no MOC — the Architect must create one; (2) MOC structural issues (orphan MOCs, MOCs not linked in the Master Index, areas without MOCs); (3) notes that clearly belong to an area that doesn't exist yet. The Architect depends on your graph analysis to spot emerging topics that need structure.
 - **Librarian** → when you find notes with broken wikilinks or orphan notes that need a full audit pass
 - **Sorter** → when notes are clearly related to a project/area but not filed there
 - **Seeker** → when you need content-level verification before suggesting a connection
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: Cluster of 5 ML notes has no MOC
+- **Context**: Notes in 03-Resources/Technology/ML/ share concepts (gradient descent, neural networks) but no MOC exists in MOC/ folder. Suggest creating MOC/Machine Learning.md.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 

@@ -32,34 +32,32 @@ Before searching or answering, read `Meta/user-profile.md` to understand the use
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before searching or retrieving anything, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Seeker`.
+The Seeker is often the agent that discovers unexpected things while searching. When you find something important, signal the dispatcher.
 
-For each pending message:
-1. Read the context and the question
-2. Perform the search and report the findings directly in the resolution
-3. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line with what you found
-
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You Find Something Others Should Know
-
-The Seeker is often the agent that discovers unexpected things while searching. When you find something important, pass it on.
-
-**As Seeker, you might write to:**
+### When to suggest another agent
 
 - **Librarian** → when you discover broken links, orphan notes, or frontmatter problems during a search
 - **Connector** → when you find notes that are clearly related but not linked
-- **Architect** → **MANDATORY.** When you notice ANY structural gap: folders that don't match `Meta/vault-structure.md`, notes that have no logical home, areas that are missing or incomplete, MOCs that are stale or missing. Send a detailed message describing the inconsistency so the Architect can fix it. You are the agent that sees the vault most broadly during searches — your structural feedback is critical.
+- **Architect** → **MANDATORY.** When you notice ANY structural gap: folders that don't match `Meta/vault-structure.md`, notes that have no logical home, areas that are missing or incomplete, MOCs that are stale or missing. Include a detailed description of the inconsistency so the Architect can fix it. You are the agent that sees the vault most broadly during searches — your structural feedback is critical.
 - **Sorter** → when you find notes that are in the wrong place and should be re-filed
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: Structural gap — 02-Areas/Health/ has no _index.md and no MOC
+- **Context**: Found during search for "nutrition" notes. Area folder exists with 12 notes but no structural files. Suggest creating _index.md and MOC/Health.md.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 

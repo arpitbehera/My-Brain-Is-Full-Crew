@@ -40,8 +40,8 @@ I don't browse Obsidian. I don't drag files around. I don't maintain complex fol
 **2. It speaks your language, literally.**
 The system works in any language. You shouldn't need to think in English to manage your brain. Just talk in Italian, French, German, Spanish, Japanese, whatever feels natural. The agents match you.
 
-**3. The agents talk to each other.**
-When the transcription agent processes a meeting, it flags follow-up tasks for the inbox manager. It's a crew, not a collection of isolated tools.
+**3. The agents coordinate through a dispatcher.**
+When the transcription agent processes a meeting and discovers a new project, the dispatcher automatically chains the Architect to create the folder structure. It's a crew, not a collection of isolated tools.
 
 ---
 
@@ -83,7 +83,7 @@ Key points:
 | 7 | **Transcriber** | Audio & Meetings | Turns recordings and transcripts into rich, structured meeting notes |
 | 8 | **Postman** | Email & Calendar | Bridges Gmail and Google Calendar with your vault: deadline radar, meeting prep |
 
-> **The agents talk to each other.** When the Transcriber processes a meeting, it alerts the Sorter. When the Postman finds emails about a new project, it tells the Architect to create a folder. It's a crew, not a collection of isolated tools.
+> **The agents coordinate through a dispatcher.** When the Transcriber processes a meeting and discovers a new project, the dispatcher chains the Architect to create the folder structure. When the Postman finds emails about deadlines, the dispatcher routes to the Sorter. It's a crew, not a collection of isolated tools.
 
 ---
 
@@ -100,10 +100,11 @@ Each crew member is an isolated AI with its own system prompt, tool restrictions
 ```mermaid
 graph TB
     User((You))
-    Claude[Claude Code]
+    Claude["Claude Code\nDispatcher"]
 
     User -->|"talk naturally"| Claude
     Claude -->|"activates the right agent"| Agents
+    Claude -->|"chains agents when needed"| Agents
 
     subgraph Agents["The Crew"]
         direction TB
@@ -123,9 +124,6 @@ graph TB
         end
     end
 
-    MessageBoard[("agent-messages.md\n(shared message board)")]
-
-    Agents <-->|"read & write"| MessageBoard
     Agents <-->|"read & write"| Vault
 
     subgraph Vault["Your Obsidian Vault"]
@@ -140,35 +138,34 @@ graph TB
 
     style User fill:#7c3aed,stroke:#5b21b6,color:#fff
     style Claude fill:#3b82f6,stroke:#2563eb,color:#fff
-    style MessageBoard fill:#f59e0b,stroke:#d97706,color:#fff
     style Core fill:#e0e7ff,stroke:#818cf8
     style External fill:#dbeafe,stroke:#60a5fa
 ```
 
-### Agent Communication Flow
+### Agent Coordination Flow
 
 ```mermaid
 sequenceDiagram
     participant U as You
-    participant C as Claude
+    participant D as Dispatcher
     participant T as Transcriber
-    participant S as Sorter
+    participant A as Architect
     participant P as Postman
-    participant MB as agent-messages.md
+    participant S as Sorter
 
-    U->>C: "Process my meeting recording"
-    C->>T: activates
+    U->>D: "Process my meeting recording"
+    D->>T: activates
     T->>T: transcribes & creates note
-    T->>MB: "new project mentioned → Architect"
-    T->>MB: "follow-up tasks → Sorter"
+    T-->>D: "Suggested next agent: Architect<br/>(new project mentioned)"
+    D->>A: chains automatically
+    A->>A: creates folder structure
 
-    U->>C: "Check my email"
-    C->>P: activates
+    U->>D: "Check my email"
+    D->>P: activates
     P->>P: scans Gmail, saves notes
-    P->>MB: "deadline found → Sorter"
-    P->>MB: "new project contact → Architect"
-
-    Note over S,P: Next time these agents run,<br/>they check the message board<br/>and act on pending messages
+    P-->>D: "Suggested next agent: Sorter<br/>(deadline notes in Inbox)"
+    D->>S: chains automatically
+    S->>S: files notes to correct locations
 ```
 
 ### Works on both Claude Code CLI and Claude Code Desktop (Cowork)
@@ -195,7 +192,7 @@ Your vault follows a hybrid **PARA + Zettelkasten** structure:
 07-Daily/          Daily notes and journals
 MOC/               Maps of Content (thematic indexes)
 Templates/         Obsidian note templates
-Meta/              Vault config, agent messages, health reports
+Meta/              Vault config, agent logs, health reports
 ```
 
 ---
@@ -278,14 +275,14 @@ Capture a quick thought on a walk. Check your email from the couch. Search your 
 
 ---
 
-## Agent inter-communication
+## Agent coordination
 
-Agents coordinate through a shared message board at `Meta/agent-messages.md`. This creates a lightweight asynchronous coordination layer:
+Agents coordinate through a dispatcher-driven orchestration system. When an agent finishes its task and detects work for another agent, it signals the dispatcher via a `### Suggested next agent` section in its output. The dispatcher reads this and automatically chains the next agent:
 
-- The **Transcriber** processes a meeting that introduces a new project and alerts the **Architect**
-- The **Postman** finds emails about deadlines and leaves a message for the **Sorter**
-- The **Connector** finds orphan notes and asks the **Librarian** to investigate
-- The **Sorter** finds notes that belong to a new area and flags it for the **Architect**
+- The **Transcriber** processes a meeting that introduces a new project -- the dispatcher chains the **Architect** to create the folder structure
+- The **Postman** finds emails about deadlines -- the dispatcher chains the **Sorter** to file them
+- The **Connector** finds orphan notes -- the dispatcher chains the **Librarian** to investigate
+- The **Sorter** finds notes that belong to a new area -- the dispatcher chains the **Architect** to build it
 
 No agent works in isolation. The crew is greater than the sum of its parts.
 

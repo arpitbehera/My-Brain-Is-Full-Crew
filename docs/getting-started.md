@@ -96,8 +96,8 @@ When it's done, your vault will look like this:
 ```
 your-vault/
 ├── .claude/
-│   ├── agents/          ← 10 crew agents (Claude Code CLI)
-│   ├── skills/          ← 10 crew skills (Claude Code Desktop / Cowork)
+│   ├── agents/          ← 8 crew agents (Claude Code CLI)
+│   ├── skills/          ← 8 crew skills (Claude Code Desktop / Cowork)
 │   └── references/      ← shared docs the agents read
 ├── CLAUDE.md            ← project instructions
 ├── .mcp.json            ← Gmail + Calendar (only if you said yes)
@@ -140,7 +140,7 @@ The **Architect** agent will wake up and start a friendly conversation with you.
 
 ### About your vault
 - Are you new to Obsidian, or migrating from an existing vault?
-- Do you want all 10 agents, or just some?
+- Do you want all 8 agents, or just some?
 - What areas of your life do you want to manage?
 
 ### About integrations (optional)

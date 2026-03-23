@@ -29,36 +29,34 @@ Before processing any notes, read `Meta/user-profile.md` to understand the user'
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before scanning the inbox, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Sorter`.
+During triage, if you encounter a situation you can't fully resolve — **don't ask the user, and don't skip silently**. Signal the dispatcher via your output.
 
-For each pending message:
-1. Read the context and proposed solution
-2. Act on it (re-file a note, revisit a filing decision, update a MOC)
-3. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line
+### When to suggest another agent
 
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You Hit a Wall
-
-During triage, if you encounter a situation you can't fully resolve — **don't ask the user, and don't skip silently**. Leave a message for the right agent in `Meta/agent-messages.md`.
-
-**As Sorter, you might write to:**
-
-- **Architect** → **MANDATORY.** Before filing ANY note, verify the destination folder exists in `Meta/vault-structure.md`. If the destination area/folder does NOT exist, you MUST: (1) leave the note in `00-Inbox/`, (2) send a message to the Architect explaining what structure is missing and what you suggest. The Architect will create the full structure and notify you when it's ready. **Never silently dump notes in a wrong folder because the right one doesn't exist — report the gap.**
+- **Architect** → **MANDATORY.** Before filing ANY note, verify the destination folder exists in `Meta/vault-structure.md`. If the destination area/folder does NOT exist, you MUST: (1) leave the note in `00-Inbox/`, (2) include a `### Suggested next agent` for the Architect explaining what structure is missing and what you suggest. **Never silently dump notes in a wrong folder because the right one doesn't exist — report the gap.**
 - **Librarian** → when you find duplicates, broken links, or frontmatter issues that go beyond this triage session
 - **Connector** → when you file a batch of notes that seem highly interconnected and should be cross-linked
 - **Seeker** → when you need to verify if a similar note already exists before creating wikilinks
 
 Always include your proposed solution and what you did in the meantime. Then **continue with the rest of the triage** — don't block.
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: Destination folder does not exist for "Machine Learning" notes
+- **Context**: 3 notes left in 00-Inbox/. Suggest creating 02-Areas/Learning/Machine Learning/ with sub-folders and MOC.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 

@@ -33,37 +33,35 @@ Before starting any audit, read `Meta/user-profile.md` to understand the user's 
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before starting any audit, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Librarian`.
-
-For each pending message:
-1. Read the context and proposed solution
-2. Act on it (fix the broken link, investigate the duplicate, correct the frontmatter)
-3. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line
-
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You Spot Issues for Others
-
-During your audit, you will often find problems that are better handled by specific agents. Leave a message rather than doing work that isn't yours.
-
-**As Librarian, you might write to:**
+### When to suggest another agent
 
 - **Architect** → **MANDATORY.** Report ALL structural issues you find: overlapping areas, missing `_index.md` files, folders without corresponding MOCs, taxonomy drift, areas without templates, orphan folders with no purpose. The Architect is the only agent that can fix structural problems — you detect them, the Architect resolves them. Be specific: list the exact paths and what's wrong.
 - **Sorter** → when you find misplaced notes that should be re-filed
 - **Connector** → when you find clusters of orphan notes that should be linked but have no obvious connections yet
 - **Seeker** → when you find notes with conflicting or duplicate information that need a content-level reconciliation
-- **Scribe** → when notes in `02-Areas/Health/` are missing required frontmatter or are structurally malformed; ask Scribe to reformat them
+- **Scribe** → when notes are missing required frontmatter or are structurally malformed; ask Scribe to reformat them
 
-Also: **at the end of every audit, scan `Meta/agent-messages.md` for resolved messages older than 7 days and archive them** to `Meta/agent-message-archive/{{YYYY-MM}}.md`.
+### Legacy cleanup
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+If the vault still has a `Meta/agent-messages.md` file from the old messaging system, rename it to `Meta/agent-messages-DEPRECATED.md` during maintenance. The new system uses dispatcher-driven orchestration — no shared message board.
+
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: Found 3 areas without _index.md and 2 orphan folders
+- **Context**: 02-Areas/Health/ missing _index.md. 02-Areas/Finance/ missing _index.md. 03-Resources/Old Projects/ and 03-Resources/Archive/ have no purpose in vault-structure.md.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 
@@ -382,7 +380,7 @@ Audit all Map of Content files:
 
 Pull insights from other agents' domains:
 1. Check `Meta/agent-log.md` for recent activity from all agents
-2. Review any unresolved messages in `Meta/agent-messages.md`
+2. If legacy `Meta/agent-messages.md` exists, rename to `Meta/agent-messages-DEPRECATED.md`
 3. Cross-reference findings — e.g., if the Connector flagged orphan notes, include them in the link integrity report
 4. Summarize inter-agent activity in the health report
 

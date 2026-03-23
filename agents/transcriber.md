@@ -35,34 +35,30 @@ Before processing, read `Meta/user-profile.md` to understand the user's preferen
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before processing any recording or transcript, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Transcriber`.
-
-For each pending message:
-1. Read the context (usually: a meeting note needs correction or a past transcript has issues)
-2. Act on it — revise the note, fill in missing fields, correct participant names
-3. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line
-
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You Spot Something Others Should Handle
-
-Transcriptions often surface important context that other agents need.
-
-**As Transcriber, you might write to:**
+### When to suggest another agent
 
 - **Architect** → **MANDATORY.** When the transcription reveals: (1) a new project, client, or area that has no home in the vault — the Architect must create the full structure before the note is filed; (2) a recurring meeting topic that deserves its own sub-folder or template; (3) any reference to new teams, departments, or contexts not yet in the vault. Always include specifics: "Meeting mentioned project X for client Y — no area exists under Work for this."
 - **Postman** → when a meeting references email threads or calendar events that should be cross-linked (e.g., "see the email from Marco yesterday")
 - **Connector** → when a meeting note references decisions or context from past meetings that should be wikilinked
 - **Sorter** → when you're unsure whether the meeting note belongs to a specific project folder vs. the general Meetings folder
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: Meeting revealed new project "Alpha" for client "Acme Corp" with no vault structure
+- **Context**: Meeting note placed in 00-Inbox/. Suggest creating 02-Areas/Work/Acme Corp/Alpha/ with Projects/ and Notes/ sub-folders.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 

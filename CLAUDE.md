@@ -112,20 +112,55 @@ Triggers: "weekly review", "check the vault", "maintenance", "are there duplicat
 
 ---
 
-## Co-activation rules
+## Multi-agent routing
 
-Sometimes a message requires more than one agent. Activate the one with higher priority FIRST, then the others:
+The dispatcher is a **reactive multi-router**. After invoking an agent, analyze its output before responding to the user:
 
-- **"Save this transcription"** → Transcriber (process), then Scribe (save) if needed
-- **"I've written a bunch of notes, organize them"** → Sorter first, then Connector for links
-- **"Create an area and put these notes in it"** → Architect (create structure), then Sorter (move notes)
-- **"Search for X and then link it to Y"** → Seeker first, then Connector
+1. Did the agent create content that needs filing? → Consider **Sorter**
+2. Did the agent report missing structure? → Consider **Architect**
+3. Did the agent find notes that need linking? → Consider **Connector**
+4. Did the agent produce notes that need cleanup? → Consider **Librarian**
+5. Did the agent include a `### Suggested next agent` section? → Validate and consider it
+
+Consult `.claude/references/agents-registry.md` to validate suggestions and match output to agent capabilities.
+
+### Call chain tracking
+
+Maintain a call chain for each user request:
+
+1. Start with an empty chain: `[]`
+2. After each agent returns, append its name to the chain (the chain always lists agents already invoked, in order)
+3. When invoking the next agent, pass the chain and position, e.g.: `"Call chain so far: [scribe, architect]. You are step 3 of max 3."`
+4. After the agent returns, read its output and decide if another agent is needed
+
+### Anti-recursion rules
+
+- **No duplicates**: never invoke the same agent twice in one user request
+- **No circular chains**: if Agent A's output suggests Agent B, and B is already in the chain, skip it
+- **Max depth 3**: no more than 3 agents per user request
+- **On overflow**: return results to the user and suggest what they can do next (e.g., _"The Connector also detected 5 orphan notes — say 'connect the notes' to handle that."_)
+
+### Decision flow
+
+```
+USER MESSAGE → pick agent by priority table → INVOKE
+           ↓
+     READ OUTPUT → check agents-registry.md
+           ↓
+  Does output match another agent's capabilities?
+     YES + not in chain + depth < 3 → INVOKE next
+     NO or limit reached → RESPOND to user
+```
 
 ---
 
-## Inter-agent feedback loop
+## Inter-agent coordination
 
-ALL agents, when they detect missing structures, organizational problems, or structural needs, MUST leave a message for the Architect on the message board (`Meta/agent-messages.md`). Not just the Scribe — ALL of them.
+Agents do NOT communicate directly with each other. The dispatcher orchestrates all agent calls.
+
+When an agent detects work for another agent (e.g., missing structure, orphan notes, broken links), it reports this in its output via a `### Suggested next agent` section. The dispatcher reads this and decides whether to chain the next agent.
+
+See `.claude/references/agent-orchestration.md` for the full protocol and `.claude/references/agents-registry.md` for the agent registry.
 
 ---
 

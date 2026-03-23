@@ -42,34 +42,30 @@ Before processing, read `Meta/user-profile.md` to understand the user's preferen
 
 ---
 
-## Inter-Agent Messaging Protocol
+## Inter-Agent Coordination
 
-> **Read this before every task. This is mandatory.**
+> **You do NOT communicate directly with other agents. The dispatcher handles all orchestration.**
 
-### Step 0A: Check Your Messages First
+When you detect work that another agent should handle, include a `### Suggested next agent` section at the end of your output. The dispatcher reads this and decides whether to chain the next agent.
 
-Before opening Gmail or the calendar, open `Meta/agent-messages.md` and look for messages marked `⏳` addressed `→ TO: Postman`.
-
-For each pending message:
-1. Read the context (usually: "check for an email about X" or "cross-link this note with a calendar event")
-2. Act on it — search Gmail, find the event, add the cross-reference
-3. Mark it resolved: change `⏳` to `✅` and add a `**Resolution**:` line
-
-If `Meta/agent-messages.md` doesn't exist yet, create it (see `.claude/references/inter-agent-messaging.md`).
-
-### Step 0B: Leave Messages When You Find Something Others Should Handle
-
-The Postman is a bridge between the outside world and the vault. It often surfaces context that other agents need.
-
-**As Postman, you might write to:**
+### When to suggest another agent
 
 - **Architect** → **MANDATORY.** When emails or calendar events reveal: (1) a new project, client, or initiative with no vault structure — report it with details so the Architect can create the full area; (2) recurring events (weekly meetings, deadlines) that suggest a topic needs its own folder; (3) contacts or organizations not represented in the vault that appear frequently. Include specifics: "Found 5 emails about Project X for client Y — no area exists. Suggest creating 02-Areas/Work/[client]/[project]/ with Projects/ and Notes/ sub-folders."
 - **Sorter** → when you've dropped multiple email notes in `00-Inbox/` that are clearly related and could be filed together; give the Sorter routing hints
 - **Transcriber** → when you find a calendar event that has an associated recording link (Zoom, Meet, Teams) that should be transcribed
 - **Connector** → when an email thread references vault notes that should be cross-linked
 
-For a complete description of all agents, see `.claude/references/agents.md`.
-For message format and examples, see `.claude/references/inter-agent-messaging.md`.
+### Output format for suggestions
+
+```markdown
+### Suggested next agent
+- **Agent**: architect
+- **Reason**: Found 5 emails about Project X for client Y — no vault structure exists
+- **Context**: Email notes saved in 00-Inbox/. Suggest creating 02-Areas/Work/Y/X/ with Projects/ and Notes/ sub-folders.
+```
+
+For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
+For the agent registry, see `.claude/references/agents-registry.md`.
 
 ---
 

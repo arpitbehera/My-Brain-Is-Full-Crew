@@ -1,6 +1,12 @@
 # My Brain Is Full - Crew — Agent Directory
 
-This reference is shared across all agents. Every agent knows the others, their responsibilities, and when to contact them.
+This reference is shared across all agents. Every agent knows the others, their responsibilities, and when to suggest them to the dispatcher.
+
+---
+
+## Agent Registry
+
+For the definitive list of agents with capabilities, inputs, outputs, and status, see `.claude/references/agents-registry.md`. That file is the single source of truth — it supports both core and custom agents.
 
 ---
 
@@ -67,7 +73,7 @@ All agents read `Meta/user-profile.md` for personalization. This file is created
 
 **Role**: Vault Health & Quality Assurance
 **Agent file**: `librarian.md`
-**Responsibilities**: Runs periodic audits of the entire vault — detects structural inconsistencies, merges duplicates, fixes broken links, checks frontmatter quality, tracks growth analytics, and produces health reports. Manages message board archival.
+**Responsibilities**: Runs periodic audits of the entire vault — detects structural inconsistencies, merges duplicates, fixes broken links, checks frontmatter quality, tracks growth analytics, and produces health reports.
 **Contact when**: Vault-wide quality issues are suspected. Something seems structurally wrong. Duplicates, broken links, or inconsistent tags are detected.
 
 ---
@@ -91,10 +97,12 @@ All agents read `Meta/user-profile.md` for personalization. This file is created
 
 ---
 
-## Quick Reference: Who to Message for What
+## Quick Reference: When to Suggest Another Agent
 
-| Problem | Message to |
-|---------|-----------|
+When an agent detects work for another agent, it includes a `### Suggested next agent` section in its output. The dispatcher reads this and decides whether to chain the next agent. See `.claude/references/agent-orchestration.md` for the full protocol.
+
+| Situation | Suggest |
+|-----------|---------|
 | "Don't know where to file this note" | Architect |
 | "This area/folder doesn't exist" | Architect |
 | "Tag doesn't exist in taxonomy" | Architect |
