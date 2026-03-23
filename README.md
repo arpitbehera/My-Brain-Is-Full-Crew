@@ -100,7 +100,7 @@ Each crew member is an isolated AI with its own system prompt, tool restrictions
 ```mermaid
 graph TB
     User((You))
-    Claude[Claude Code\nDispatcher]
+    Claude["Claude Code\nDispatcher"]
 
     User -->|"talk naturally"| Claude
     Claude -->|"activates the right agent"| Agents
