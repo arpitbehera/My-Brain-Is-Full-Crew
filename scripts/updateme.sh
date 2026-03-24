@@ -158,7 +158,7 @@ for ref in "$REPO_DIR/references/"*.md; do
   basename "$ref" >> "$VAULT_DIR/.claude/references/.core-manifest"
   vault_copy="$VAULT_DIR/.claude/references/$name"
 
-  # For user-mutable files: preserve the "## Custom Agents" section
+  # For user-mutable files: preserve custom agent content
   if echo "$USER_MUTABLE_REFS" | grep -qw "$name" && [[ -f "$vault_copy" ]]; then
     # Extract user's custom section (from "## Custom Agents" to end of file)
     custom_section=""
@@ -166,12 +166,37 @@ for ref in "$REPO_DIR/references/"*.md; do
       custom_line=$(grep -n "^## Custom Agents" "$vault_copy" | head -1 | cut -d: -f1)
       custom_section=$(tail -n +"$custom_line" "$vault_copy")
     fi
+
+    # For agents-registry.md: also extract custom rows from the Registry table
+    # Custom rows are table lines whose agent name is NOT a core agent
+    custom_table_rows=""
+    if [[ "$name" == "agents-registry.md" ]]; then
+      CORE_NAMES="architect scribe sorter seeker connector librarian transcriber postman"
+      while IFS= read -r row; do
+        # Extract agent name from first column: | name | ...
+        agent_name=$(echo "$row" | awk -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2}')
+        if [[ -n "$agent_name" ]] && ! echo "$CORE_NAMES" | grep -qw "$agent_name"; then
+          custom_table_rows="${custom_table_rows}${row}"$'\n'
+        fi
+      done < <(grep "^|" "$vault_copy" | grep -v "^| Name " | grep -v "^|---")
+    fi
+
     # Copy the new repo version
     if ! diff -q "$ref" "$vault_copy" >/dev/null 2>&1; then
       cp "$ref" "$vault_copy"
+
+      # Re-insert custom table rows into the registry table (before the --- after the table)
+      if [[ -n "$custom_table_rows" ]]; then
+        # Find the last core agent row (| postman |) and insert custom rows after it
+        last_core_line=$(grep -n "^| postman " "$vault_copy" | tail -1 | cut -d: -f1)
+        if [[ -n "$last_core_line" ]]; then
+          { head -n "$last_core_line" "$vault_copy"; printf "%s" "$custom_table_rows"; tail -n +"$((last_core_line + 1))" "$vault_copy"; } > "$vault_copy.tmp"
+          mv "$vault_copy.tmp" "$vault_copy"
+        fi
+      fi
+
       # Re-append preserved custom section (replace the repo's empty custom section)
       if [[ -n "$custom_section" ]]; then
-        # Remove the repo's default custom section and append user's
         repo_custom_line=$(grep -n "^## Custom Agents" "$vault_copy" | head -1 | cut -d: -f1)
         if [[ -n "$repo_custom_line" ]]; then
           head -n "$((repo_custom_line - 1))" "$vault_copy" > "$vault_copy.tmp"
@@ -179,7 +204,7 @@ for ref in "$REPO_DIR/references/"*.md; do
           mv "$vault_copy.tmp" "$vault_copy"
         fi
       fi
-      info "Updated reference: $name (preserved custom sections)"
+      info "Updated reference: $name (preserved custom content)"
       REF_COUNT=$((REF_COUNT + 1))
     fi
     continue

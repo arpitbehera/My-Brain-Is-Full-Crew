@@ -121,10 +121,22 @@ success "Copied $AGENT_COUNT agents"
 # ── Copy references ─────────────────────────────────────────────────────────
 info "Creating .claude/references/ in vault..."
 mkdir -p "$VAULT_DIR/.claude/references"
+# User-mutable references (modified by Architect when creating custom agents)
+USER_MUTABLE_REFS="agents-registry.md agents.md"
+
 : > "$VAULT_DIR/.claude/references/.core-manifest"
 for ref in "$REPO_DIR/references/"*.md; do
+  ref_name="$(basename "$ref")"
+  # On reinstall, preserve user-mutable reference files
+  if [[ $EXISTING -eq 1 && -f "$VAULT_DIR/.claude/references/$ref_name" ]]; then
+    if echo "$USER_MUTABLE_REFS" | grep -qw "$ref_name"; then
+      warn "Preserving existing $ref_name (run updateme.sh to merge upstream changes)"
+      echo "$ref_name" >> "$VAULT_DIR/.claude/references/.core-manifest"
+      continue
+    fi
+  fi
   cp "$ref" "$VAULT_DIR/.claude/references/"
-  basename "$ref" >> "$VAULT_DIR/.claude/references/.core-manifest"
+  echo "$ref_name" >> "$VAULT_DIR/.claude/references/.core-manifest"
 done
 success "Copied references"
 
