@@ -47,7 +47,8 @@ echo ""
 
 # ── Confirm overwrite ────────────────────────────────────────────────────
 echo -e "${BOLD}This will overwrite core agent files, references, and CLAUDE.md.${NC}"
-echo -e "   ${DIM}Custom agents in .claude/agents/ will NOT be touched.${NC}"
+echo -e "   ${DIM}Custom agent files in .claude/agents/ will not be deleted or overwritten.${NC}"
+echo -e "   ${DIM}Custom agent entries in registry/directory will be preserved during update.${NC}"
 echo -e "   ${DIM}Your vault notes are never touched.${NC}"
 echo ""
 echo -e "   ${BOLD}c)${NC} Continue"
@@ -74,8 +75,12 @@ for vault_agent in "$VAULT_DIR/.claude/agents/"*.md; do
   [[ -f "$REPO_DIR/agents/$name" ]] && continue
   # Skip if already deprecated
   [[ "$name" == *"-DEPRECATED"* ]] && continue
+  # Require manifest to distinguish core from custom agents
+  if [[ ! -f "$MANIFEST" ]]; then
+    continue
+  fi
   # Skip custom agents: only deprecate if listed in the manifest
-  if [[ -f "$MANIFEST" ]] && ! grep -qxF "$name" "$MANIFEST"; then
+  if ! grep -qxF "$name" "$MANIFEST"; then
     continue
   fi
   deprecated_name="${name%.md}-DEPRECATED.md"
@@ -122,8 +127,12 @@ for vault_ref in "$VAULT_DIR/.claude/references/"*.md; do
   name="$(basename "$vault_ref")"
   [[ -f "$REPO_DIR/references/$name" ]] && continue
   [[ "$name" == *"-DEPRECATED"* ]] && continue
+  # Require manifest to distinguish core from user-created references
+  if [[ ! -f "$REF_MANIFEST" ]]; then
+    continue
+  fi
   # Skip user-created references: only deprecate if listed in the manifest
-  if [[ -f "$REF_MANIFEST" ]] && ! grep -qxF "$name" "$REF_MANIFEST"; then
+  if ! grep -qxF "$name" "$REF_MANIFEST"; then
     continue
   fi
   deprecated_name="${name%.md}-DEPRECATED.md"
@@ -137,14 +146,47 @@ for vault_ref in "$VAULT_DIR/.claude/references/"*.md; do
 done
 
 # ── Update references and rewrite manifest ────────────────────────────────
+# Files the Architect modifies with user content (custom agent rows/sections).
+# These need special merge logic to preserve the "## Custom Agents" section.
+USER_MUTABLE_REFS="agents-registry.md agents.md"
+
 REF_COUNT=0
 mkdir -p "$VAULT_DIR/.claude/references"
 : > "$VAULT_DIR/.claude/references/.core-manifest"
 for ref in "$REPO_DIR/references/"*.md; do
   name="$(basename "$ref")"
   basename "$ref" >> "$VAULT_DIR/.claude/references/.core-manifest"
-  if ! diff -q "$ref" "$VAULT_DIR/.claude/references/$name" >/dev/null 2>&1; then
-    cp "$ref" "$VAULT_DIR/.claude/references/"
+  vault_copy="$VAULT_DIR/.claude/references/$name"
+
+  # For user-mutable files: preserve the "## Custom Agents" section
+  if echo "$USER_MUTABLE_REFS" | grep -qw "$name" && [[ -f "$vault_copy" ]]; then
+    # Extract user's custom section (from "## Custom Agents" to end of file)
+    custom_section=""
+    if grep -qn "^## Custom Agents" "$vault_copy"; then
+      custom_line=$(grep -n "^## Custom Agents" "$vault_copy" | head -1 | cut -d: -f1)
+      custom_section=$(tail -n +"$custom_line" "$vault_copy")
+    fi
+    # Copy the new repo version
+    if ! diff -q "$ref" "$vault_copy" >/dev/null 2>&1; then
+      cp "$ref" "$vault_copy"
+      # Re-append preserved custom section (replace the repo's empty custom section)
+      if [[ -n "$custom_section" ]]; then
+        # Remove the repo's default custom section and append user's
+        repo_custom_line=$(grep -n "^## Custom Agents" "$vault_copy" | head -1 | cut -d: -f1)
+        if [[ -n "$repo_custom_line" ]]; then
+          head -n "$((repo_custom_line - 1))" "$vault_copy" > "$vault_copy.tmp"
+          echo "$custom_section" >> "$vault_copy.tmp"
+          mv "$vault_copy.tmp" "$vault_copy"
+        fi
+      fi
+      info "Updated reference: $name (preserved custom sections)"
+      REF_COUNT=$((REF_COUNT + 1))
+    fi
+    continue
+  fi
+
+  if ! diff -q "$ref" "$vault_copy" >/dev/null 2>&1; then
+    cp "$ref" "$vault_copy"
     info "Updated reference: $name"
     REF_COUNT=$((REF_COUNT + 1))
   fi
