@@ -50,12 +50,12 @@ echo -e "   ${DIM}${VAULT_DIR}${NC}"
 echo ""
 echo -e "   ${BOLD}y)${NC} Yes, install here"
 echo -e "   ${BOLD}n)${NC} No, let me type the correct path"
-read -r -p "   > " CONFIRM
+if ! read -r -p "   > " CONFIRM 2>/dev/null; then CONFIRM=""; fi
 
 if [[ "$CONFIRM" =~ ^[Nn]$ ]]; then
   echo ""
   echo -e "${BOLD}Enter the full path to your Obsidian vault:${NC}"
-  read -r -p "   > " VAULT_DIR
+  if ! read -r -p "   > " VAULT_DIR 2>/dev/null; then die "Cannot read input — are you running in a non-interactive shell?"; fi
   VAULT_DIR="${VAULT_DIR/#\~/$HOME}"
   [[ -d "$VAULT_DIR" ]] || die "Directory not found: $VAULT_DIR"
 fi
@@ -77,7 +77,7 @@ if [[ $EXISTING -eq 1 ]]; then
   echo ""
   echo -e "   ${BOLD}c)${NC} Continue (overwrite core files, keep custom agents)"
   echo -e "   ${BOLD}q)${NC} Quit"
-  read -r -p "   > " OVERWRITE_ANSWER
+  if ! read -r -p "   > " OVERWRITE_ANSWER 2>/dev/null; then OVERWRITE_ANSWER=""; fi
   if [[ ! "$OVERWRITE_ANSWER" =~ ^[Cc]$ ]]; then
     echo ""
     info "Installation cancelled."
@@ -178,7 +178,7 @@ echo -e "   ${DIM}You can always add this later.${NC}"
 echo ""
 echo -e "   ${BOLD}y)${NC} Yes, set up Gmail + Calendar"
 echo -e "   ${BOLD}n)${NC} No, skip for now"
-read -r -p "   > " MCP_ANSWER
+if ! read -r -p "   > " MCP_ANSWER 2>/dev/null; then MCP_ANSWER=""; fi
 
 if [[ "$MCP_ANSWER" =~ ^[Yy]$ ]]; then
   if [[ -f "$VAULT_DIR/.mcp.json" ]]; then

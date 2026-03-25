@@ -53,7 +53,7 @@ echo -e "   ${DIM}Your vault notes are never touched.${NC}"
 echo ""
 echo -e "   ${BOLD}c)${NC} Continue"
 echo -e "   ${BOLD}q)${NC} Quit"
-read -r -p "   > " UPDATE_ANSWER
+if ! read -r -p "   > " UPDATE_ANSWER 2>/dev/null; then UPDATE_ANSWER=""; fi
 if [[ ! "$UPDATE_ANSWER" =~ ^[Cc]$ ]]; then
   echo ""
   info "Update cancelled."
@@ -178,7 +178,7 @@ for ref in "$REPO_DIR/references/"*.md; do
         if [[ -n "$agent_name" ]] && ! echo "$CORE_NAMES" | grep -qw "$agent_name"; then
           custom_table_rows="${custom_table_rows}${row}"$'\n'
         fi
-      done < <(grep "^|" "$vault_copy" | grep -v "^| Name " | grep -v "^|---")
+      done < <(grep "^|" "$vault_copy" | grep -v "^|[[:space:]]*Name[[:space:]]*|" | grep -v "^|[-[:space:]]*|")
     fi
 
     # Copy the new repo version
