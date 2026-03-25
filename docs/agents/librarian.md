@@ -12,33 +12,39 @@ The Librarian is conservative by design. It never deletes anything, only archive
 
 ## Capabilities
 
-- **6-phase full audit**: structural scan, duplicate detection, link integrity, frontmatter audit, MOC review, and health report generation
+Several of the Librarian's more complex, multi-step flows have been promoted to dedicated skills that run as guided conversations:
+
+| Capability | Now handled by |
+|---|---|
+| Full 7-phase vault audit | `/vault-audit` skill |
+| Deep clean (extended cleanup) | `/deep-clean` skill |
+| Tag garden (tag analysis and cleanup) | `/tag-garden` skill |
+
+What the Librarian agent still does directly:
+
 - **Quick health check**: a lighter version focusing on the most common issues (broken links, inbox stragglers, recent duplicates)
-- **Deep clean**: aggressive audit that catches everything, including near-duplicate content with 70%+ overlap
+- **Consistency report**: shows exactly what is wrong and what was fixed, with counts and percentages
+- **Growth analytics**: tracks your vault's growth over time (notes per week, links per note, health score trends)
+- **Stale content detector**: identifies notes not touched in 30, 60, or 90 days across active areas
 - **Duplicate detection**: finds exact filename matches, "(copy)" variants, sync conflicts, and content-similar notes
 - **Broken link repair**: identifies wikilinks pointing to non-existent notes and fixes or flags them
 - **Orphan note rescue**: finds notes with zero incoming links and suggests where they should be connected
 - **Frontmatter consistency**: checks that every note has required fields (type, date, tags, status) and fixes format issues automatically
-- **Tag audit**: validates all tags against the official taxonomy and flags unknown or duplicate-meaning tags
-- **Consistency report**: shows exactly what is wrong and what was fixed, with counts and percentages
-- **Growth analytics**: tracks your vault's growth over time (notes per week, links per note, health score trends)
-- **Stale content detector**: identifies notes not touched in 30, 60, or 90 days across active areas
-- **Tag garden**: cleans up tag sprawl by finding redundant, misspelled, or orphaned tags
 - **Message archive cleanup**: archives resolved agent messages older than 7 days
 
 ## How to use it
 
-Run the Librarian periodically to maintain vault quality:
+Run the Librarian periodically to maintain vault quality. Some phrases invoke a dedicated skill instead of the agent:
 
-- "Weekly review" / "Run the weekly audit"
-- "Check vault health" / "Quick health check"
-- "Are there any duplicates?"
-- "Deep clean the vault"
-- "Fix broken links"
-- "Show me orphan notes"
-- "Consistency report"
-- "How has my vault grown?"
-- "Clean up the tags"
+- "Weekly review" / "Run the weekly audit" / "Vault audit" --> invokes the `/vault-audit` skill
+- "Deep clean the vault" --> invokes the `/deep-clean` skill
+- "Clean up the tags" / "Tag garden" --> invokes the `/tag-garden` skill
+- "Check vault health" / "Quick health check" --> Librarian agent
+- "Are there any duplicates?" --> Librarian agent
+- "Fix broken links" --> Librarian agent
+- "Show me orphan notes" --> Librarian agent
+- "Consistency report" --> Librarian agent
+- "How has my vault grown?" --> Librarian agent
 
 In Italian: "Review settimanale", "Controlla il vault", "Ci sono duplicati?", "Pulizia"
 In French: "Revision hebdomadaire", "Verifier le vault"
@@ -130,3 +136,7 @@ Your vault is growing healthily. The link density improvement is a good sign. Th
 - **Pay attention to the health score.** It is a single number that tells you how well-maintained your vault is. Aim for 85%+.
 - **Use growth analytics for motivation.** Seeing your vault grow in notes, links, and quality is surprisingly satisfying and helps you stay consistent.
 - **Act on archive suggestions.** Stale content in active areas adds noise. Archiving old notes keeps your working areas focused.
+
+## What it remembers
+
+The Librarian keeps a post-it in `Meta/states/librarian.md` with notes from its last audit: issues found, problems fixed, and recurring problems across audits. This lets it track whether vault health is improving or degrading over time.

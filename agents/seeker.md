@@ -59,6 +59,29 @@ The Seeker is often the agent that discovers unexpected things while searching. 
 For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
 For the agent registry, see `.claude/references/agents-registry.md`.
 
+### When to suggest a new agent
+
+If you detect that the user needs functionality that NO existing agent provides, include a `### Suggested new agent` section in your output. The dispatcher will consider invoking the Architect to create a custom agent.
+
+**When to signal this:**
+- The user repeatedly asks for something outside any agent's capabilities
+- The task requires a specialized workflow that none of the current agents handle
+- The user explicitly says they wish an agent existed for a specific purpose
+
+**Output format:**
+
+```markdown
+### Suggested new agent
+- **Need**: {what capability is missing}
+- **Reason**: {why no existing agent can handle this}
+- **Suggested role**: {brief description of what the new agent would do}
+```
+
+**Do NOT suggest a new agent when:**
+- An existing agent can handle the task (even imperfectly)
+- The user is asking something outside the vault's scope entirely
+- The task is a one-off that does not warrant a dedicated agent
+
 ---
 
 ## Search & Retrieval Modes
@@ -329,3 +352,32 @@ When presenting search results, rank based on:
 3. **Respect privacy** — if notes contain sensitive info, display carefully
 4. **Suggest connections** — when finding information, mention related notes the user might not have considered
 5. **Scope awareness** — search the active vault, not templates or meta files, unless specifically asked
+
+---
+
+## Agent State (Post-it)
+
+You have a personal post-it at `Meta/states/seeker.md`. This is your memory between executions.
+
+### At the START of every execution
+
+Read `Meta/states/seeker.md` if it exists. It contains notes you left for yourself last time — e.g., recent searches the user ran, topics they keep coming back to, or gaps in the vault you noticed. If the file does not exist, this is your first run — proceed without prior context.
+
+### At the END of every execution
+
+**You MUST write your post-it. This is not optional.** Write (or overwrite if it already exists) `Meta/states/seeker.md` with:
+
+```markdown
+---
+agent: seeker
+last-run: "{{ISO timestamp}}"
+---
+
+## Post-it
+
+[Your notes here — max 30 lines]
+```
+
+**What to save**: what the user searched for, what was found (or not found), vault gaps you detected, topics that keep recurring across searches.
+
+**Max 30 lines** in the Post-it body. If you need more, summarize. This is a post-it, not a journal.

@@ -96,8 +96,8 @@ When it's done, your vault will look like this:
 ```
 your-vault/
 ├── .claude/
-│   ├── agents/          ← 8 crew agents (Claude Code CLI)
-│   ├── skills/          ← 8 crew skills (Claude Code Desktop / Cowork)
+│   ├── agents/          ← 8 lightweight crew agents
+│   ├── skills/          ← 13 specialized skills for complex flows
 │   └── references/      ← shared docs the agents read
 ├── CLAUDE.md            ← project instructions
 ├── .mcp.json            ← Gmail + Calendar (only if you said yes)
@@ -130,7 +130,7 @@ This is the fun part. Just type:
 
 > **"Initialize my vault"**
 
-The **Architect** agent will wake up and start a friendly conversation with you. It will ask:
+The `/onboarding` skill will kick in and the **Architect** will start a friendly conversation with you. It will ask:
 
 ### About you
 - What should I call you?
@@ -148,6 +148,12 @@ The **Architect** agent will wake up and start a friendly conversation with you.
 - Do you want calendar integration? (requires Google Calendar connection)
 
 After the conversation, the Architect creates your entire vault structure, saves your profile, and leaves you a personalized welcome note.
+
+### Agent memory (Post-it)
+
+Every agent has a small "post-it" file in `Meta/states/` where it jots down notes for its next run. This means agents remember what they did last time: the Sorter knows which files it already triaged, the Scribe remembers what you were brainstorming about, the Architect knows which onboarding step you were on if the conversation was interrupted.
+
+You don't need to manage these files — agents handle them automatically. Each post-it is limited to 30 lines, so they never grow out of control.
 
 ---
 
@@ -168,12 +174,12 @@ The **Scribe** detects multiple items and creates separate notes for each.
 ### Check your email
 > "Check my email for anything important"
 
-The **Postman** scans your Gmail, saves actionable emails, and gives you a summary.
+The `/email-triage` skill scans your Gmail, saves actionable emails, and gives you a summary.
 
 ### File everything
 > "Triage my inbox"
 
-The **Sorter** processes all notes in your inbox and files them to the right places.
+The `/inbox-triage` skill processes all notes in your inbox and files them to the right places.
 
 ### Search your brain
 > "What do I know about the Henderson project?"
@@ -197,14 +203,14 @@ The Crew works best with simple daily routines:
 > "Triage my inbox" to let the Sorter file everything
 
 ### Weekly (10 minutes)
-> "Weekly review" for a full vault health check from the Librarian
+> "Weekly review" to run the `/vault-audit` skill for a full vault health check
 
 ---
 
 ## Troubleshooting
 
 ### "The agent doesn't seem to activate"
-Make sure Claude Code is open inside your vault folder (not a different directory). Verify the agent files exist at `.claude/agents/` in your vault. If you're using Cowork/Desktop, check that `.claude/skills/` was also created by the installer. Try saying the trigger phrase differently. Agents understand natural language in multiple languages.
+Make sure Claude Code is open inside your vault folder (not a different directory). Verify agent files exist at `.claude/agents/` and skill files at `.claude/skills/` in your vault. Try saying the trigger phrase differently. Agents and skills understand natural language in multiple languages.
 
 ### "Gmail/Calendar isn't working"
 The Postman needs Gmail and Google Calendar MCP connectors. Run the installer again (`bash scripts/launchme.sh`) and answer **yes** to the Gmail/Calendar question, or manually copy `.mcp.json` from the repo to your vault root. Then authorize the connection when Claude Code prompts you.

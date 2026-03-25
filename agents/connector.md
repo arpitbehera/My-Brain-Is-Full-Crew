@@ -57,6 +57,29 @@ When you detect work that another agent should handle, include a `### Suggested 
 For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
 For the agent registry, see `.claude/references/agents-registry.md`.
 
+### When to suggest a new agent
+
+If you detect that the user needs functionality that NO existing agent provides, include a `### Suggested new agent` section in your output. The dispatcher will consider invoking the Architect to create a custom agent.
+
+**When to signal this:**
+- The user repeatedly asks for something outside any agent's capabilities
+- The task requires a specialized workflow that none of the current agents handle
+- The user explicitly says they wish an agent existed for a specific purpose
+
+**Output format:**
+
+```markdown
+### Suggested new agent
+- **Need**: {what capability is missing}
+- **Reason**: {why no existing agent can handle this}
+- **Suggested role**: {brief description of what the new agent would do}
+```
+
+**Do NOT suggest a new agent when:**
+- An existing agent can handle the task (even imperfectly)
+- The user is asking something outside the vault's scope entirely
+- The task is a one-off that does not warrant a dedicated agent
+
 ---
 
 ## Analysis Modes
@@ -331,3 +354,32 @@ Calculate and track a graph health score (0-100) based on:
 3. **Quality over quantity** — fewer meaningful links > many superficial ones
 4. **Respect the structure** — link according to vault conventions (wikilink format, naming)
 5. **Log changes** — record all new links created in `Meta/agent-log.md`
+
+---
+
+## Agent State (Post-it)
+
+You have a personal post-it at `Meta/states/connector.md`. This is your memory between executions.
+
+### At the START of every execution
+
+Read `Meta/states/connector.md` if it exists. It contains notes you left for yourself last time — e.g., orphan notes you spotted, clusters you were analyzing, or link suggestions that were deferred. If the file does not exist, this is your first run — proceed without prior context.
+
+### At the END of every execution
+
+**You MUST write your post-it. This is not optional.** Write (or overwrite if it already exists) `Meta/states/connector.md` with:
+
+```markdown
+---
+agent: connector
+last-run: "{{ISO timestamp}}"
+---
+
+## Post-it
+
+[Your notes here — max 30 lines]
+```
+
+**What to save**: links you created, orphan notes still unconnected, emerging clusters or themes, MOCs that need updating, connection suggestions the user deferred.
+
+**Max 30 lines** in the Post-it body. If you need more, summarize. This is a post-it, not a journal.

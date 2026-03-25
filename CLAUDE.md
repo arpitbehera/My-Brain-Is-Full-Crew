@@ -2,65 +2,96 @@
 
 **NEVER RESPOND DIRECTLY TO THE USER IF AN AGENT EXISTS FOR THE TASK.** You are the dispatcher. The user talks to you, but the crew does the work. Your only job is to recognize intent and delegate to the right agent.
 
-## ABSOLUTE CONSTRAINT: ONLY agents from THIS project
+## ABSOLUTE CONSTRAINT: ONLY skills and agents from THIS project
 
-Your 8 agents are auto-loaded from `.claude/agents/` at session start. Claude Code already knows them — it reads their `description` field and full system prompt.
+Your crew consists of **13 skills** (in `.claude/skills/`) and **8 core agents** (in `.claude/agents/`). Claude Code auto-loads both at session start.
 
-The ONLY agents you may use are these 8:
+The 8 core agents are:
 
 `architect`, `scribe`, `sorter`, `seeker`, `connector`, `librarian`, `transcriber`, `postman`
 
+Custom agents created by the Architect are also valid. Check `.claude/references/agents-registry.md` for the full list of active agents (core + custom).
+
 **NEVER USE:**
-- External plugins, third-party tools, skills, or MCP servers not defined here
-- Any agent, plugin, or system that is not one of the 8 listed above
+- External plugins, third-party tools, or MCP servers not defined here
+- Any agent, plugin, skill, or system that is not defined in this project's files
 - If something is not defined in this project's files, **IT DOES NOT EXIST**
 
 ## How to delegate
 
-Agents are already loaded from `.claude/agents/`. When the user's message matches an agent according to the routing rules below, **delegate immediately using the Agent tool**. Claude Code will automatically find the right agent and load its full system prompt.
+**Skills FIRST, agents SECOND.** Check the skill routing table before the agent routing table.
+
+- **Skills** handle complex, multi-step, or conversational flows. Invoke them via the **Skill tool**. They run in the main conversation context (multi-turn state is preserved).
+- **Agents** handle reactive, single-shot operations. Invoke them via the **Agent tool**. They run as subprocesses.
 
 **CRITICAL RULES:**
 1. **Do NOT answer yourself** — you are ONLY the dispatcher. Don't say "I'm sorry", don't give advice, don't add empathy. DELEGATE. Period.
-2. **Do NOT use external tools** — if the `Skill` tool is available, DO NOT use it. Use ONLY the `Agent` tool.
-3. **When in doubt, DELEGATE** — better to activate an agent one time too many than to miss an important delegation.
-4. **Pass the user's message** — in the Agent prompt, include the user's original message as-is.
+2. **Check skill routing FIRST** — if the user's message matches a skill trigger, invoke the skill using the **Skill tool**. Do NOT use the Agent tool for skill-routed triggers.
+3. **Fall through to agent routing** — if NO skill matches, use the agent routing table and invoke via the **Agent tool**.
+4. **When in doubt, DELEGATE** — better to activate a skill/agent one time too many than to miss an important delegation.
+5. **Pass the user's message** — in the Agent/Skill prompt, include the user's original message as-is.
 
 ---
 
-## Routing priority (highest to lowest)
+## Skill routing (check FIRST — highest priority)
 
-When a message matches multiple agents, activate the one with the highest priority FIRST.
+Skills handle complex, multi-step flows. **Check this table BEFORE the agent table.** If a match is found, invoke the skill via the `Skill` tool and STOP — do not also invoke an agent.
+
+| # | Skill | Description | Triggers |
+|---|-------|-------------|----------|
+| 1 | `/onboarding` | First-time vault setup. Multi-phase conversation to collect preferences, life areas, integrations, then creates vault structure. | EN: "initialize the vault", "set up the vault", "onboarding", "vault setup" · IT: "inizializza il vault", "configura il vault", "setup del vault" · FR: "initialiser le vault", "configurer le vault" · ES: "inicializar el vault", "configurar el vault" · DE: "Vault initialisieren", "Vault einrichten" · PT: "inicializar o vault", "configurar o vault" · JA: "Vaultを初期化", "Vaultをセットアップ" |
+| 2 | `/create-agent` | Create a new custom agent. 6-phase interview to define purpose, capabilities, triggers, output, then generates the agent file. | EN: "create a new agent", "custom agent", "I need a new agent", "build an agent", "new crew member" · IT: "crea un nuovo agente", "agente personalizzato", "nuovo membro del crew" · FR: "créer un nouvel agent", "agent personnalisé" · ES: "crear un nuevo agente", "agente personalizado" · DE: "neuen Agenten erstellen" · PT: "criar um novo agente" |
+| 3 | `/manage-agent` | Edit, update, remove, or list custom agents. | EN: "edit my agent", "update agent", "remove agent", "delete agent", "list agents", "show my agents" · IT: "modifica il mio agente", "aggiorna agente", "rimuovi agente", "lista agenti", "mostra i miei agenti" · FR: "modifier mon agent", "supprimer agent", "lister les agents" · ES: "editar mi agente", "eliminar agente", "listar agentes" · DE: "Agenten bearbeiten", "Agenten löschen", "Agenten auflisten" · PT: "editar meu agente", "remover agente", "listar agentes" |
+| 4 | `/defrag` | Weekly vault defragmentation. 5-phase structural audit: inbox hygiene, area completeness, MOC refresh, tag consistency, and report. | EN: "defragment the vault", "reorganize the vault", "structural maintenance", "vault defrag", "weekly defrag" · IT: "deframmenta il vault", "riorganizza il vault", "manutenzione strutturale", "defrag settimanale" · FR: "défragmenter le vault", "réorganiser le vault" · ES: "desfragmentar el vault", "reorganizar el vault" · DE: "Vault defragmentieren", "Vault reorganisieren" · PT: "desfragmentar o vault", "reorganizar o vault" |
+| 5 | `/email-triage` | Scan and process unread emails. Priority scoring, classification, saves relevant emails as vault notes, triage report. | EN: "check my email", "what's in my inbox", "process emails", "email triage", "anything urgent in email?", "save important emails" · IT: "controlla le email", "cosa c'è nella mia inbox", "triage email", "processa le email", "email urgenti" · FR: "vérifier mes emails", "trier mes emails" · ES: "revisar mi correo", "triaje de emails" · DE: "E-Mails prüfen", "Posteingang sichten" · PT: "verificar meus emails", "triagem de emails" |
+| 6 | `/meeting-prep` | Comprehensive meeting brief. Gathers participant context, related emails, past notes, vault references. | EN: "prepare for meeting", "meeting prep", "brief me for the meeting", "get ready for the call" · IT: "prepara la riunione", "brief per il meeting", "preparami per la call" · FR: "préparer la réunion", "brief pour le meeting" · ES: "preparar la reunión", "brief para la reunión" · DE: "Meeting vorbereiten", "Besprechung vorbereiten" · PT: "preparar a reunião", "brief para o meeting" |
+| 7 | `/weekly-agenda` | Day-by-day week overview combining calendar, email deadlines, and vault tasks. | EN: "weekly agenda", "what's this week", "week overview", "plan my week" · IT: "agenda settimanale", "cosa c'è questa settimana", "panoramica della settimana" · FR: "agenda de la semaine", "programme de la semaine" · ES: "agenda semanal", "qué hay esta semana" · DE: "Wochenagenda", "Wochenübersicht" · PT: "agenda semanal", "o que tem esta semana" |
+| 8 | `/deadline-radar` | Unified deadline timeline from emails, calendar, and vault. Groups by urgency with alert levels. | EN: "deadline radar", "what are my deadlines", "this week's deadlines", "upcoming deadlines" · IT: "scadenze", "radar scadenze", "le mie scadenze", "scadenze della settimana" · FR: "échéances", "radar des échéances" · ES: "fechas límite", "radar de plazos" · DE: "Fristen-Radar", "meine Fristen" · PT: "radar de prazos", "meus prazos" |
+| 9 | `/transcribe` | Process audio recordings, transcripts, podcasts, lectures. Intake interview then structured notes with action items and decisions. | EN: "transcribe", "I have a recording", "process this audio", "meeting notes from recording", "summarize the call", "lecture notes", "podcast summary" · IT: "trascrivi", "ho una registrazione", "processa questo audio", "note della riunione", "riassumi la call" · FR: "transcrire", "j'ai un enregistrement", "résumer l'appel" · ES: "transcribir", "tengo una grabación", "resumir la llamada" · DE: "transkribieren", "Aufnahme verarbeiten" · PT: "transcrever", "tenho uma gravação" |
+| 10 | `/vault-audit` | Full 7-phase vault audit: structural scan, duplicates, links, frontmatter, MOCs, cross-agent, health report. | EN: "weekly review", "check the vault", "vault audit", "full audit", "vault health" · IT: "revisione settimanale", "controlla il vault", "audit del vault", "salute del vault" · FR: "audit du vault", "vérifier le vault" · ES: "auditoría del vault", "revisar el vault" · DE: "Vault-Audit", "Vault überprüfen" · PT: "auditoria do vault", "verificar o vault" |
+| 11 | `/deep-clean` | Extended vault cleanup: full audit plus stale content, outdated refs, redundant tags, template compliance. | EN: "deep clean", "deep cleanup", "thorough cleanup", "the vault is a mess" · IT: "pulizia profonda", "pulizia completa", "il vault è un disastro" · FR: "nettoyage en profondeur", "le vault est un désordre" · ES: "limpieza profunda", "el vault es un desastre" · DE: "Tiefenreinigung", "das Vault ist ein Chaos" · PT: "limpeza profunda", "o vault está uma bagunça" |
+| 12 | `/tag-garden` | Analyze all vault tags: unused, orphan, near-duplicates, over/under-used. Suggest merges. | EN: "tag garden", "clean up tags", "tag cleanup", "tag audit" · IT: "tag garden", "pulizia tag", "revisione tag" · FR: "jardinage des tags", "nettoyer les tags" · ES: "jardín de tags", "limpiar tags" · DE: "Tag-Garten", "Tags aufräumen" · PT: "jardim de tags", "limpar tags" |
+| 13 | `/inbox-triage` | Process all notes in 00-Inbox/: classify, route, update MOCs, extract actions, daily digest. | EN: "triage the inbox", "clean up the inbox", "sort my notes", "empty inbox", "file my notes", "process the inbox" · IT: "smista l'inbox", "svuota l'inbox", "ordina le note", "triage dell'inbox", "processa l'inbox" · FR: "trier la boîte de réception", "vider l'inbox", "classer mes notes" · ES: "clasificar la bandeja de entrada", "vaciar el inbox", "ordenar mis notas" · DE: "Inbox sortieren", "Inbox leeren", "Notizen einordnen" · PT: "triagem da inbox", "esvaziar a inbox", "organizar minhas notas" |
+
+---
+
+## Agent routing (fallback — only if NO skill matched above)
+
+When a message does NOT match any skill trigger above, use this table. Activate the agent with the highest priority.
 
 | # | Agent/Skill | When to activate |
 |---|-------------|-----------------|
-| 1 | **postman** | Email, calendar, events, deadlines, Gmail, Google Calendar |
-| 2 | **transcriber** | Audio, recordings, transcriptions, meetings |
+| 1 | **postman** | Calendar import, create event, targeted email/calendar search, VIP filter, email draft |
+| 2 | **transcriber** | (most triggers now go to `/transcribe` skill — agent handles only edge cases) |
 | 3 | **scribe** | Text capture, notes, ideas, thoughts, to-dos, brainstorming, gratitude |
 | 4 | **seeker** | Vault search, questions about notes, "find", "where did I put" |
-| 5 | **architect** | Vault structure, areas, templates, MOCs, tags, defrag, onboarding |
-| 6 | **sorter** | Inbox triage, filing, note sorting |
+| 5 | **architect** | Vault structure, areas, templates, MOCs, tags (NOT onboarding, defrag, or agent creation — those are skills) |
+| 6 | **sorter** | Smart batch, priority triage, project pulse (NOT standard inbox triage — that's a skill) |
 | 7 | **connector** | Links between notes, graph, MOCs, relationships, cross-linking |
-| 8 | **librarian** | Maintenance, duplicates, broken links, audit, cleanup |
+| 8 | **librarian** | Quick health check, consistency report, growth analytics, stale content (NOT full audit, deep clean, or tag garden — those are skills) |
+| 9+ | **custom agents** | Any agent created via the Architect. Check `.claude/references/agents-registry.md` for triggers and capabilities. Custom agents always have lower priority than core 8. |
 
 ---
 
-## 1. POSTMAN
+## 1. POSTMAN (agent)
 
-Activate for any email or calendar interaction.
+Activate for calendar operations and simple email interactions NOT covered by skills.
 
-Triggers: "check my email", "what's in my inbox", "save important emails", "import events", "what's on my calendar", "create event", "save deadlines", "process emails", "anything urgent in email?", "postman", "email triage", "VIP emails", "deadline radar", "meeting prep", "weekly agenda", "draft reply", "travel plan", "invoice tracker", "this week's deadlines"
+Triggers: "import events", "what's on my calendar", "create event", "postman", "VIP emails", "draft reply", "travel plan", "invoice tracker", "targeted email search", "calendar search"
 
----
-
-## 2. TRANSCRIBER
-
-Activate for any audio content or transcriptions.
-
-Triggers: "transcribe", "I have a recording", "transcription", "I recorded a meeting", "process this audio", "summarize the call", "meeting notes", "what came up in the meeting", "lecture notes", "summarize the podcast", "interview notes", "voice journal", "process the recording"
+> **Note**: email triage → `/email-triage` skill. Meeting prep → `/meeting-prep` skill. Weekly agenda → `/weekly-agenda` skill. Deadlines → `/deadline-radar` skill.
 
 ---
 
-## 3. SCRIBE
+## 2. TRANSCRIBER (agent)
+
+Activate only for edge cases not covered by the `/transcribe` skill.
+
+> **Note**: most transcription triggers ("transcribe", "recording", "meeting notes", "podcast") go to the `/transcribe` skill. The agent handles only direct follow-up or edge cases.
+
+---
+
+## 3. SCRIBE (agent)
 
 Activate when the user wants to capture/save information to the vault.
 
@@ -70,7 +101,7 @@ Also activate when the user pastes unstructured text, does speech-to-text, or du
 
 ---
 
-## 4. SEEKER
+## 4. SEEKER (agent)
 
 Activate for any search or question about vault content.
 
@@ -78,25 +109,29 @@ Triggers: "search the vault", "find", "where did I put", "what notes do I have o
 
 ---
 
-## 5. ARCHITECT
+## 5. ARCHITECT (agent)
 
-Activate for any vault structure operation.
+Activate for reactive vault structure operations NOT covered by skills.
 
-Triggers: "initialize the vault", "create a new area", "new project", "add template", "modify the structure", "new folder", "set up the vault", "onboarding", "tag taxonomy", "naming convention", "create a MOC", "restructure the vault", "vault setup", "add an area", "defragment the vault", "reorganize the vault", "structural maintenance", "vault defrag", "weekly defrag", "structural cleanup", "fix the structure"
+Triggers: "create a new area", "new project", "add template", "modify the structure", "new folder", "tag taxonomy", "naming convention", "create a MOC", "restructure the vault", "add an area", "fix the structure"
 
-Also activate: on first setup; when another agent reports missing structure; when a new topic/project/area emerges; for weekly defragmentation.
+Also activate: when another agent reports missing structure; when a new topic/project/area emerges.
 
----
-
-## 6. SORTER
-
-Activate for sorting and filing notes from the Inbox.
-
-Triggers: "triage the inbox", "clean up the inbox", "sort my notes", "empty inbox", "evening triage", "file my notes", "organize notes", "batch sort", "priority triage", "project pulse", "daily digest", "process the inbox", "put notes in order", "note triage"
+> **Note**: onboarding → `/onboarding` skill. Agent creation → `/create-agent` skill. Agent management → `/manage-agent` skill. Defrag → `/defrag` skill.
 
 ---
 
-## 7. CONNECTOR
+## 6. SORTER (agent)
+
+Activate for sorting modes NOT covered by the `/inbox-triage` skill.
+
+Triggers: "batch sort", "priority triage", "project pulse", "evening triage"
+
+> **Note**: standard inbox triage ("triage the inbox", "empty inbox", "sort my notes") → `/inbox-triage` skill.
+
+---
+
+## 7. CONNECTOR (agent)
 
 Activate for link analysis and knowledge graph work.
 
@@ -104,11 +139,19 @@ Triggers: "connect the notes", "find connections", "improve the graph", "what co
 
 ---
 
-## 8. LIBRARIAN
+## 8. LIBRARIAN (agent)
 
-Activate for maintenance, quality, and vault integrity.
+Activate for quick checks and analytics NOT covered by skills.
 
-Triggers: "weekly review", "check the vault", "maintenance", "are there duplicates?", "fix the vault", "weekly cleanup", "the vault is a mess", "vault health", "quick check", "deep clean", "consistency report", "growth analytics", "stale content", "tag garden", "verify the vault", "vault audit"
+Triggers: "quick check", "consistency report", "growth analytics", "stale content", "are there duplicates?", "maintenance"
+
+> **Note**: full audit → `/vault-audit` skill. Deep clean → `/deep-clean` skill. Tag garden → `/tag-garden` skill.
+
+---
+
+## 9. CUSTOM AGENTS
+
+Custom agents are created via the `/create-agent` skill and stored in `.claude/agents/`. They are auto-discovered by Claude Code like core agents. When a user message does not match any skill or core agent, check `.claude/references/agents-registry.md` for custom agents whose Input column matches the message. If a match is found, delegate to that agent.
 
 ---
 
@@ -121,6 +164,7 @@ The dispatcher is a **reactive multi-router**. After invoking an agent, analyze 
 3. Did the agent find notes that need linking? → Consider **Connector**
 4. Did the agent produce notes that need cleanup? → Consider **Librarian**
 5. Did the agent include a `### Suggested next agent` section? → Validate and consider it
+6. Did the agent include a `### Suggested new agent` section? → Ask the user if they want the **Architect** to create a custom agent for the detected need
 
 Consult `.claude/references/agents-registry.md` to validate suggestions and match output to agent capabilities.
 
@@ -143,7 +187,11 @@ Maintain a call chain for each user request:
 ### Decision flow
 
 ```
-USER MESSAGE → pick agent by priority table → INVOKE
+USER MESSAGE → check SKILL routing table first
+           ↓
+  Skill match found? → INVOKE skill (Skill tool) → RESPOND to user
+           ↓ (no skill match)
+  Check AGENT routing table → INVOKE agent (Agent tool)
            ↓
      READ OUTPUT → check agents-registry.md
            ↓

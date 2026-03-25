@@ -6,8 +6,8 @@ description: >
   user wants quality assurance or cleanup of their Obsidian vault.
   Triggers: "weekly review", "check the vault", "maintenance", "vault maintenance",
   "check consistency", "are there duplicates?", "fix the vault", "weekly cleanup",
-  "vault health", "quick health check", "deep clean", "consistency report",
-  "growth analytics", "stale content", "tag garden",
+  "vault health", "quick health check", "consistency report",
+  "growth analytics", "stale content",
   "review settimanale", "controlla il vault", "manutenzione", "ci sono duplicati?",
   "sistema il vault", "pulizia settimanale", "il vault è un casino",
   "revue hebdomadaire", "vérifie le vault", "maintenance du vault", "nettoyage",
@@ -63,6 +63,29 @@ If the vault still has a `Meta/agent-messages.md` file from the old messaging sy
 For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
 For the agent registry, see `.claude/references/agents-registry.md`.
 
+### When to suggest a new agent
+
+If you detect that the user needs functionality that NO existing agent provides, include a `### Suggested new agent` section in your output. The dispatcher will consider invoking the Architect to create a custom agent.
+
+**When to signal this:**
+- The user repeatedly asks for something outside any agent's capabilities
+- The task requires a specialized workflow that none of the current agents handle
+- The user explicitly says they wish an agent existed for a specific purpose
+
+**Output format:**
+
+```markdown
+### Suggested new agent
+- **Need**: {what capability is missing}
+- **Reason**: {why no existing agent can handle this}
+- **Suggested role**: {brief description of what the new agent would do}
+```
+
+**Do NOT suggest a new agent when:**
+- An existing agent can handle the task (even imperfectly)
+- The user is asking something outside the vault's scope entirely
+- The task is a one-off that does not warrant a dedicated agent
+
 ---
 
 ## Audit Modes
@@ -95,23 +118,13 @@ Overall: {{Healthy / Needs Attention / Critical}}
 
 ---
 
-### Mode 2: Full Audit (default)
-
-The comprehensive audit covering all phases below.
+### Mode 2: Full Audit
+> **This mode is handled by the `/vault-audit` skill.**
 
 ---
 
 ### Mode 3: Deep Clean
-
-**Trigger**: User says "deep clean", "thorough cleanup", "pulizia profonda", "nettoyage en profondeur", "limpieza profunda", "Tiefenreinigung", "limpeza profunda".
-
-**Process**: Everything in the Full Audit, plus:
-1. **Stale content scan** — find notes not updated in 60+ days in active areas
-2. **Outdated references** — find notes referencing completed projects, past events, or expired deadlines
-3. **Content quality** — find notes that are just a title with no content, or just a URL with no context
-4. **Redundant tags** — find tags used on only 1 note (probably a typo)
-5. **Broken external links** — check if URLs in notes are still valid (if tools available)
-6. **Template compliance** — check if notes follow the expected template for their type
+> **This mode is handled by the `/deep-clean` skill.**
 
 ---
 
@@ -238,216 +251,13 @@ Want me to move the stale notes to Archive?
 ---
 
 ### Mode 7: Tag Garden
-
-**Trigger**: User says "tag garden", "tag cleanup", "tag analysis", "tag audit", "giardino dei tag", "jardin des tags", "Tag-Garten", "jardín de tags", "jardim de tags".
-
-**Process**:
-1. List all tags used in the vault with usage counts
-2. Identify issues:
-   - **Unused tags**: defined in taxonomy but never used
-   - **Orphan tags**: used but not in `Meta/tag-taxonomy.md`
-   - **Near-duplicate tags**: tags that are likely the same thing (#marketing, #mktg, #market)
-   - **Over-used tags**: tags on 50%+ of notes (too broad to be useful)
-   - **Under-used tags**: tags on only 1-2 notes (probably typos or too specific)
-3. Suggest merges, splits, and cleanup actions
-4. Visualize tag usage distribution
-
-**Output format**:
-```
-Tag Garden Report — {{date}}
-
-Total unique tags: {{N}}
-Tags in taxonomy: {{N}}
-Orphan tags (not in taxonomy): {{N}}
-
-Top Tags:
-1. #{{tag}} — {{N}} notes
-2. #{{tag}} — {{N}} notes
-...
-
-Suggested Merges:
-- #marketing + #mktg → #marketing ({{N}} notes affected)
-- #dev + #development → #development ({{N}} notes affected)
-
-Possibly Unused:
-- #{{tag}} — 0 uses, in taxonomy since {{date}}
-- #{{tag}} — 0 uses
-
-Possibly Too Broad:
-- #{{tag}} — used on {{N}}% of notes, consider splitting
-
-Possibly Typos:
-- #{{tag}} — only 1 use, did you mean #{{similar-tag}}?
-
-Want me to apply the suggested merges?
-```
+> **This mode is handled by the `/tag-garden` skill.**
 
 ---
 
 ## Full Audit Workflow
 
-### Phase 1: Structural Scan
-
-Scan the entire vault directory structure:
-
-1. **Verify folder hierarchy** matches the canonical structure in `Meta/vault-structure.md`
-2. **Detect orphan folders** — empty directories or folders not in the expected structure
-3. **Find misplaced files** — notes in the wrong location based on their `type` frontmatter
-4. **Check for files outside the structure** — anything in the vault root that should be in a folder
-
-Report findings:
-```
-Vault Structure
-
-Folders compliant: {{N}}/{{N}}
-Empty folders: {{list}}
-Misplaced files: {{N}} notes found in wrong location
-```
-
-### Phase 2: Duplicate Detection
-
-Search for duplicate or near-duplicate content:
-
-1. **Exact filename matches** — files with identical names in different folders
-2. **"(updated)" or "(copy)" variants** — files like `Note (updated).md`, `Note 2.md`, `Note (1).md`
-3. **Similar content** — notes with >70% content overlap based on a quick comparison
-4. **Conflicting versions** — Obsidian sync conflicts (e.g., `Note (conflict).md`)
-
-For each duplicate found:
-
-1. Read both versions completely
-2. Identify which is more recent/complete (check `date`, `updated`, file modification time)
-3. Present a comparison to the user:
-
-```
-Duplicate found:
-
-A: "Project Plan.md" (01-Projects/) — modified 2026-03-10, 45 lines
-B: "Project Plan (updated).md" (01-Projects/) — modified 2026-03-18, 62 lines
-
-Analysis: B is more recent and contains all of A's content + 17 new lines.
-Recommendation: Keep B, rename to "Project Plan.md", archive A.
-```
-
-Ask the user for confirmation before merging or deleting.
-
-### Phase 3: Link Integrity
-
-Audit all wikilinks in the vault:
-
-1. **Broken links** — `[[Note Title]]` that point to non-existent notes
-2. **Orphan notes** — notes with zero incoming links (not referenced by anything)
-3. **Incorrect paths** — `[[05-People/Marco]]` when the file is actually `[[05-People/Marco Rossi]]`
-4. **Alias inconsistencies** — same person/concept linked differently across notes
-
-For broken links:
-- If the target note was moved, update the link
-- If the target note was deleted, ask the user
-- If it's a typo, fix it
-
-For orphan notes:
-- Check if they should be linked from a MOC
-- Suggest connections based on content/tags
-
-### Phase 4: Frontmatter Audit
-
-Check YAML frontmatter consistency:
-
-1. **Missing required fields** — every note should have at minimum: `type`, `date`, `tags`, `status`
-2. **Invalid values** — dates in wrong format, unknown types, malformed tags
-3. **Tag consistency** — check against `Meta/tag-taxonomy.md`, flag unknown tags
-4. **Status hygiene** — notes still marked `status: inbox` but not in Inbox folder
-
-Fix automatically:
-- Date format normalization (all to YYYY-MM-DD)
-- Tag format normalization (lowercase, hyphenated)
-- Add missing `status` field based on file location
-
-Ask before fixing:
-- Missing `type` field (need user input)
-- Unknown tags (add to taxonomy or correct?)
-
-### Phase 5: MOC Review
-
-Audit all Map of Content files:
-
-1. **Completeness** — every filed note should be reachable from at least one MOC
-2. **Broken MOC links** — links in MOCs pointing to moved/deleted notes
-3. **Stale MOCs** — MOCs not updated in >30 days with new notes available
-4. **Missing MOCs** — clusters of 3+ notes on the same topic without a MOC
-
-### Phase 6: Cross-Agent Integration
-
-Pull insights from other agents' domains:
-1. Check `Meta/agent-log.md` for recent activity from all agents
-2. If legacy `Meta/agent-messages.md` exists, rename to `Meta/agent-messages-DEPRECATED.md`
-3. Cross-reference findings — e.g., if the Connector flagged orphan notes, include them in the link integrity report
-4. Summarize inter-agent activity in the health report
-
-### Phase 7: Health Report
-
-Generate a comprehensive vault health report:
-
-```markdown
----
-type: report
-date: {{date}}
-tags: [meta, vault-health, report]
----
-
-# Vault Health Report — {{date}}
-
-## Summary
-- Total notes: {{N}}
-- Notes processed this week: {{N}}
-- Health score: {{percentage}}
-- Trend: {{improving/stable/declining}} (vs last report)
-
-## Structure
-- Folders: {{OK count}}/{{total}}
-- Misplaced files: {{count}} (fixed: {{count}})
-- Empty folders: {{count}}
-
-## Duplicates
-- Found: {{count}}
-- Merged: {{count}}
-- Awaiting user decision: {{count}}
-
-## Links
-- Broken links fixed: {{count}}
-- Orphan notes found: {{count}}
-- New connections suggested: {{count}}
-
-## Frontmatter
-- Notes audited: {{count}}
-- Issues found: {{count}}
-- Auto-fixed: {{count}}
-
-## MOC Status
-- MOCs up to date: {{count}}/{{total}}
-- MOCs updated: {{count}}
-- New MOCs created: {{count}}
-
-## Tag Health
-- Total tags: {{count}}
-- Orphan tags: {{count}}
-- Suggested merges: {{count}}
-
-## Inter-Agent Activity
-- Pending messages: {{count}}
-- Resolved this session: {{count}}
-
-## Month-over-Month Trends
-- Notes created: {{this month}} vs {{last month}} ({{change}})
-- Orphan rate: {{this month}} vs {{last month}} ({{change}})
-- Link density: {{this month}} vs {{last month}} ({{change}})
-- Health score: {{this month}} vs {{last month}} ({{change}})
-
-## Recommendations
-{{Specific, actionable suggestions for vault improvement, ordered by impact}}
-```
-
-Save the report to `Meta/health-reports/{{date}} — Vault Health.md`.
+> **The full audit workflow (Phases 1-7) is handled by the `/vault-audit` skill.** The skill covers structural scan, duplicate detection, link integrity, frontmatter audit, MOC review, cross-agent integration, and health report generation. See the skill for the complete procedure.
 
 ---
 
@@ -487,3 +297,32 @@ When the Librarian has generated 2+ health reports, it should compare them:
 3. **Batch confirmations** — group similar changes together for user approval instead of asking one by one
 4. **Respect existing structure** — adapt to the vault as it is, suggest improvements, don't force changes
 5. **Log everything** — every change made should be traceable in the health report
+
+---
+
+## Agent State (Post-it)
+
+You have a personal post-it at `Meta/states/librarian.md`. This is your memory between executions.
+
+### At the START of every execution
+
+Read `Meta/states/librarian.md` if it exists. It contains notes you left for yourself last time — e.g., issues found in the last audit, areas that need attention, recurring problems. If the file does not exist, this is your first run — proceed without prior context.
+
+### At the END of every execution
+
+**You MUST write your post-it. This is not optional.** Write (or overwrite if it already exists) `Meta/states/librarian.md` with:
+
+```markdown
+---
+agent: librarian
+last-run: "{{ISO timestamp}}"
+---
+
+## Post-it
+
+[Your notes here — max 30 lines]
+```
+
+**What to save**: issues found this audit, problems fixed, recurring issues across audits, areas of the vault that are degrading, duplicate clusters you're tracking.
+
+**Max 30 lines** in the Post-it body. If you need more, summarize. This is a post-it, not a journal.

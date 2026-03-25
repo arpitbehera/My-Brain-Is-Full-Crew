@@ -31,7 +31,7 @@ Practical scenarios showing how the Crew works in daily life. Each example shows
 > "Triage my inbox"
 
 **What happens:**
-1. **Sorter** scans all 12 notes in `00-Inbox/`
+1. The `/inbox-triage` skill scans all 12 notes in `00-Inbox/`
 2. Reads each note's content and frontmatter
 3. Files them:
    - 3 meeting notes go to `06-Meetings/2026/03/`
@@ -55,7 +55,7 @@ Practical scenarios showing how the Crew works in daily life. Each example shows
 *[pastes raw transcript]*
 
 **What happens:**
-1. **Transcriber** processes the raw text
+1. The `/transcribe` skill processes the raw text
 2. Identifies speakers from context
 3. Generates:
    - Executive summary (4 sentences)
@@ -78,7 +78,7 @@ Practical scenarios showing how the Crew works in daily life. Each example shows
 > "Check my email for anything urgent"
 
 **What happens:**
-1. **Postman** scans your Gmail inbox (last 48 hours)
+1. The `/email-triage` skill scans your Gmail inbox (last 48 hours)
 2. Reads 34 emails
 3. Filters:
    - 22 newsletters/promos/notifications are ignored
@@ -121,7 +121,7 @@ Practical scenarios showing how the Crew works in daily life. Each example shows
 > "Run the weekly review"
 
 **What happens:**
-1. **Librarian** runs a 6-phase audit:
+1. The `/vault-audit` skill runs a multi-phase audit:
    - Structure scan: all folders intact
    - Duplicate detection: found 1 near-duplicate
    - Link integrity: 3 broken links fixed automatically, 2 orphan notes flagged
@@ -157,16 +157,16 @@ Practical scenarios showing how the Crew works in daily life. Each example shows
 
 ## Daily Workflow Cheat Sheet
 
-| Time | What to say | Agent |
-|------|------------|-------|
-| Morning | "What's on my calendar today?" | Postman |
-| Morning | "Check my email" | Postman |
-| Any time | "Save this: [thought]" | Scribe |
-| After meeting | "Transcribe this meeting: [paste]" | Transcriber |
-| Evening | "Triage my inbox" | Sorter |
-| Weekly | "Weekly review" | Librarian |
-| When lost | "Find [topic]" | Seeker |
-| When stuck | "Find connections for [note]" | Connector |
+| Time | What to say | Skill/Agent |
+|------|------------|-------------|
+| Morning | "What's on my calendar today?" | Postman agent |
+| Morning | "Check my email" | `/email-triage` skill |
+| Any time | "Save this: [thought]" | Scribe agent |
+| After meeting | "Transcribe this meeting: [paste]" | `/transcribe` skill |
+| Evening | "Triage my inbox" | `/inbox-triage` skill |
+| Weekly | "Weekly review" | `/vault-audit` skill |
+| When lost | "Find [topic]" | Seeker agent |
+| When stuck | "Find connections for [note]" | Connector agent |
 
 ---
 

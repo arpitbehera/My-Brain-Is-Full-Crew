@@ -12,7 +12,14 @@ Run the Sorter daily (or whenever your Inbox feels cluttered) and your vault sta
 
 ## Capabilities
 
-- **Standard triage**: processes inbox notes one by one, classifying and filing each to its proper location
+Standard inbox triage has been promoted to a dedicated skill:
+
+| Capability | Now handled by |
+|---|---|
+| Standard inbox triage (classify, route, update MOCs, extract actions) | `/inbox-triage` skill |
+
+What the Sorter agent still does directly:
+
 - **Smart batch mode**: groups related notes by project, topic, or date before filing, so related notes end up cross-linked
 - **Priority triage**: scans the inbox and ranks notes by urgency (critical, high, normal, low), filing the most important ones first
 - **Project pulse**: generates an activity report showing which projects received the most new notes and which have gone quiet
@@ -25,14 +32,13 @@ Run the Sorter daily (or whenever your Inbox feels cluttered) and your vault sta
 
 ## How to use it
 
-Trigger the Sorter when your Inbox has accumulated notes:
+Trigger the Sorter when your Inbox has accumulated notes. Some phrases invoke a dedicated skill instead of the agent:
 
-- "Triage my inbox" / "Process inbox" / "File my notes"
-- "Batch sort" / "Smart batch" (for 10+ notes)
-- "Priority triage" / "Urgent first" / "What needs attention?"
-- "Project pulse" / "Which projects are active?"
-- "What's piling up?"
-- "Evening triage" / "Daily digest"
+- "Triage my inbox" / "Process inbox" / "File my notes" --> invokes the `/inbox-triage` skill
+- "Batch sort" / "Smart batch" (for 10+ notes) --> Sorter agent
+- "Priority triage" / "Urgent first" / "What needs attention?" --> Sorter agent
+- "Project pulse" / "Which projects are active?" --> Sorter agent
+- "Evening triage" / "Daily digest" --> Sorter agent
 
 In Italian: "Smista la inbox", "Pulisci la inbox", "Svuota inbox"
 In French: "Trie la boite de reception", "Range mes notes"
@@ -127,3 +133,7 @@ Emerging Topics (not yet a project/area):
 - **Check the archive suggestions.** At the end of every triage, the Sorter flags stale notes. Archiving keeps your active areas lean.
 - **Use project pulse weekly.** It is a quick way to see where your energy is actually going versus where you think it is going.
 - **Never delete notes.** The Sorter follows a strict no-deletion policy. Notes are moved, archived, or merged, never destroyed.
+
+## What it remembers
+
+The Sorter keeps a post-it in `Meta/states/sorter.md` with notes from its last triage: files still in the inbox, ambiguous notes it deferred, and filing patterns it noticed. This helps it pick up where it left off and avoid re-processing notes it already handled.

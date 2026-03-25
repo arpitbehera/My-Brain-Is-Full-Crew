@@ -12,8 +12,17 @@ Think of it as the urban planner of your knowledge city. It decides where things
 
 ## Capabilities
 
-- **Full vault onboarding**: a guided, conversational setup that creates your entire vault from scratch based on your answers
-- **User profile creation**: saves your preferences, language, goals, and context so every agent can serve you better
+The Architect agent handles reactive, single-shot structural operations. Several of its more complex, multi-step flows have been promoted to dedicated skills that run as guided conversations:
+
+| Capability | Now handled by |
+|---|---|
+| Full vault onboarding | `/onboarding` skill |
+| Vault defragmentation | `/defrag` skill |
+| Custom agent creation | `/create-agent` skill |
+| Custom agent management | `/manage-agent` skill |
+
+What the Architect agent still does directly:
+
 - **Folder management**: creates, restructures, and archives folders as your life evolves
 - **Template management**: builds and maintains Templater-compatible templates for meetings, ideas, tasks, projects, people, daily notes, and more
 - **Tag taxonomy**: maintains the official tag list, enforces naming rules, and prevents tag sprawl
@@ -26,16 +35,19 @@ Think of it as the urban planner of your knowledge city. It decides where things
 
 ## How to use it
 
-Start a conversation with any of these phrases (in any language):
+Start a conversation with any of these phrases (in any language). Some phrases invoke a dedicated skill instead of the agent directly:
 
-- "Initialize my vault" / "Set up the vault" / "Onboarding"
-- "Create a new project folder for [name]"
-- "I need a new area for [topic]"
-- "Add a template for [type]"
-- "Update the tag taxonomy"
-- "Restructure my vault"
-- "I changed jobs, update my profile"
-- "Create a MOC for [topic]"
+- "Initialize my vault" / "Set up the vault" / "Onboarding" --> invokes the `/onboarding` skill
+- "Create a new agent" / "I need a new agent" --> invokes the `/create-agent` skill
+- "Edit my agent" / "Remove agent" / "List agents" --> invokes the `/manage-agent` skill
+- "Defragment the vault" / "Weekly defrag" --> invokes the `/defrag` skill
+- "Create a new area for [topic]" --> invokes the Architect agent directly
+- "Create a new project folder for [name]" --> Architect agent
+- "Add a template for [type]" --> Architect agent
+- "Update the tag taxonomy" --> Architect agent
+- "Restructure my vault" --> Architect agent
+- "I changed jobs, update my profile" --> Architect agent
+- "Create a MOC for [topic]" --> Architect agent
 
 In Italian: "Inizializza il vault", "Nuovo progetto", "Configura il vault"
 In French: "Initialiser le vault", "Nouveau projet"
@@ -107,3 +119,7 @@ Want me to apply these changes?
 - **Ask for restructuring when things feel messy.** If you notice notes piling up in the wrong places or tags multiplying, ask the Architect to audit and evolve the structure.
 - **Update your profile when your life changes.** New job? New language? New goal? Tell the Architect so every agent stays in sync.
 - **Start small.** You do not need all 10 agents on day one. Start with the core (Architect, Scribe, Sorter, Seeker) and add more as your vault grows.
+
+## What it remembers
+
+The Architect keeps a post-it in `Meta/states/architect.md` that tracks its progress across conversations. This is especially important during onboarding and custom agent creation: if the conversation is interrupted, the Architect picks up exactly where it left off. After a completed operation, it remembers what it did (folders created, structural issues detected) so it has context for next time.

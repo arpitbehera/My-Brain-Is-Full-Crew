@@ -107,3 +107,7 @@ Filed as `2026-03-21 - Idea - Tiered Pricing Model.md` with `source: voice-note`
 - **Say "brainstorm" when you want zero filtering.** The Scribe will capture every idea without judging, then gently highlight the best ones.
 - **Check the suggested connections.** The Scribe adds a Connections section at the end of each note. These are quick wins for building your knowledge graph.
 - **Trust the assumptions.** The Scribe makes judgment calls when your input is ambiguous. It always tells you what it assumed, so you can correct it if needed.
+
+## What it remembers
+
+The Scribe keeps a post-it in `Meta/states/scribe.md` with notes from its last run: which notes it created, brainstorm topics in progress, and assumptions it made. This means if you come back to continue a brainstorm or refine a note, the Scribe already has context.

@@ -111,3 +111,7 @@ Would you like to create notes for any of these gaps, or search for related cont
 - **Ask about gaps.** "What am I missing about [topic]?" triggers the missing knowledge detector, which is surprisingly useful for learning and project planning.
 - **Combine criteria.** "Find all notes tagged #urgent that mention Marco from the last two weeks." The Seeker handles compound queries.
 - **Use it to update notes.** Instead of finding a note and editing it yourself, tell the Seeker: "Update the note about X with this new info."
+
+## What it remembers
+
+The Seeker keeps a post-it in `Meta/states/seeker.md` with notes from its last search: what you searched for, what was found (or not), and recurring topics. This helps it refine future searches and flag vault gaps it has noticed over time.

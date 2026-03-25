@@ -12,31 +12,39 @@ It works in four modes: email triage (scan and save important emails), calendar 
 
 ## Capabilities
 
-- **Email triage**: scans unread Gmail messages, filters out noise (newsletters, notifications, receipts), and saves relevant emails as structured notes with action items and deadlines
-- **VIP filter**: prioritizes emails from important contacts (colleagues, clients, key people)
+Several of the Postman's more complex, multi-step flows have been promoted to dedicated skills that run as guided conversations:
+
+| Capability | Now handled by |
+|---|---|
+| Email triage (scan and process unread emails) | `/email-triage` skill |
+| Meeting prep (comprehensive meeting brief) | `/meeting-prep` skill |
+| Weekly agenda (day-by-day week overview) | `/weekly-agenda` skill |
+| Deadline radar (unified deadline timeline) | `/deadline-radar` skill |
+
+What the Postman agent still does directly:
+
 - **Calendar import**: pulls upcoming Google Calendar events into the vault as meeting prep notes with participant lists and agenda
 - **Event creation**: creates Google Calendar events from your requests or from deadlines found in vault notes
 - **Targeted search**: searches Gmail or Calendar for specific topics, people, or date ranges
-- **Deadline radar**: extracts all upcoming deadlines from recent emails and presents them in one view
-- **Meeting prep**: creates pre-meeting notes from calendar events with participant context from your People folder
-- **Weekly agenda**: generates a week-at-a-glance view combining calendar events and email-sourced deadlines
+- **VIP filter**: prioritizes emails from important contacts (colleagues, clients, key people)
+- **Email drafting**: drafts reply emails based on vault context
 - **Travel mode**: when it detects travel-related events (flights, hotels, conferences), creates a consolidated travel itinerary note
 - **Thread intelligence**: reads entire email threads and synthesizes key points and latest developments
 - **Attachment awareness**: flags emails with attachments (cannot process them, but notes their existence)
 
 ## How to use it
 
-Trigger the Postman for email and calendar tasks:
+Trigger the Postman for calendar and targeted email tasks. Some phrases invoke a dedicated skill instead of the agent:
 
-- "Check my email" / "Triage my inbox"
-- "What's on my calendar this week?"
-- "Create an event for Friday at 3pm"
-- "Are there any urgent emails?"
-- "Import this week's meetings"
-- "Find emails about [topic]"
-- "What deadlines are coming up?"
-- "Prepare me for tomorrow's meetings"
-- "Weekly agenda"
+- "Check my email" / "Triage my inbox" --> invokes the `/email-triage` skill
+- "Prepare me for tomorrow's meetings" --> invokes the `/meeting-prep` skill
+- "Weekly agenda" / "Plan my week" --> invokes the `/weekly-agenda` skill
+- "What deadlines are coming up?" --> invokes the `/deadline-radar` skill
+- "What's on my calendar this week?" --> Postman agent
+- "Create an event for Friday at 3pm" --> Postman agent
+- "Import this week's meetings" --> Postman agent
+- "Find emails about [topic]" --> Postman agent
+- "Draft a reply to [person]" --> Postman agent
 
 In Italian: "Controlla la mail", "Cosa ho in inbox", "Crea evento", "Cosa ho in calendario"
 In French: "Verifie mes emails", "Qu'est-ce que j'ai au calendrier"
@@ -124,3 +132,7 @@ Shall I proceed?
 - **Trust the noise filter.** The Postman is aggressive about filtering newsletters, notifications, and receipts. If it ever filters something important, tell it. It learns from your corrections.
 - **Check "needs your input" items.** The Postman flags ambiguous emails rather than guessing. These are usually worth a quick look.
 - **Make sure Gmail and Google Calendar are connected.** The Postman needs API access to your accounts. Check `Meta/user-profile.md` to verify integrations are enabled, or ask the Architect during onboarding.
+
+## What it remembers
+
+The Postman keeps a post-it in `Meta/states/postman.md` with notes from its last run: when it last scanned the inbox, emails it saved to the vault, pending follow-ups, and upcoming deadlines it detected. This prevents re-processing the same emails and keeps deadline tracking continuous.

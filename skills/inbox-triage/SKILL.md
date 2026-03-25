@@ -1,24 +1,21 @@
 ---
-name: sorter
+name: inbox-triage
 description: >
-  Triage the Obsidian Inbox and sort notes into their proper vault locations. Use when
-  the user says "batch sort", "smart batch", "sort my notes", "priority triage",
-  "project pulse", "daily digest", "file my notes",
-  "smista la inbox", "organizza le note", "smistamento serale",
-  "trie la boîte de réception", "range mes notes",
-  "ordena la bandeja", "organiza las notas", "triaje",
-  "sortiere den Eingang", "Notizen sortieren",
-  "organiza a caixa de entrada", "triagem",
-  or when the Inbox has accumulated notes that need filing.
-tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+  Process all notes in 00-Inbox/: scan, classify by content, route to correct vault
+  location, update MOCs, extract action items, and generate a daily digest. Triggers:
+  EN: "triage the inbox", "clean up the inbox", "sort my notes", "empty inbox", "file my notes", "process the inbox".
+  IT: "smista l'inbox", "svuota l'inbox", "ordina le note", "triage dell'inbox", "processa l'inbox".
+  FR: "trier la boite de réception", "vider l'inbox", "classer mes notes".
+  ES: "clasificar la bandeja de entrada", "vaciar el inbox", "ordenar mis notas".
+  DE: "Inbox sortieren", "Inbox leeren", "Notizen einordnen".
+  PT: "triagem da inbox", "esvaziar a inbox", "organizar minhas notas".
 ---
 
-# Sorter — Intelligent Inbox Triage & Filing Agent
+# Inbox Triage — Intelligent Inbox Processing & Filing
 
 Always respond to the user in their language. Match the language the user writes in.
 
-Process all notes sitting in `00-Inbox/`, classify them, move them to the correct vault location, create wikilinks, and update relevant MOC files. This is the daily housekeeping agent that keeps the vault clean and navigable.
+Process all notes sitting in `00-Inbox/`, classify them, move them to the correct vault location, create wikilinks, and update relevant MOC files. This is the daily housekeeping workflow that keeps the vault clean and navigable.
 
 ---
 
@@ -38,10 +35,10 @@ During triage, if you encounter a situation you can't fully resolve — **don't 
 
 ### When to suggest another agent
 
-- **Architect** → **MANDATORY.** Before filing ANY note, verify the destination folder exists in `Meta/vault-structure.md`. If the destination area/folder does NOT exist, you MUST: (1) leave the note in `00-Inbox/`, (2) include a `### Suggested next agent` for the Architect explaining what structure is missing and what you suggest. **Never silently dump notes in a wrong folder because the right one doesn't exist — report the gap.**
-- **Librarian** → when you find duplicates, broken links, or frontmatter issues that go beyond this triage session
-- **Connector** → when you file a batch of notes that seem highly interconnected and should be cross-linked
-- **Seeker** → when you need to verify if a similar note already exists before creating wikilinks
+- **Architect** — **MANDATORY.** Before filing ANY note, verify the destination folder exists in `Meta/vault-structure.md`. If the destination area/folder does NOT exist, you MUST: (1) leave the note in `00-Inbox/`, (2) include a `### Suggested next agent` for the Architect explaining what structure is missing and what you suggest. **Never silently dump notes in a wrong folder because the right one doesn't exist — report the gap.**
+- **Librarian** — when you find duplicates, broken links, or frontmatter issues that go beyond this triage session
+- **Connector** — when you file a batch of notes that seem highly interconnected and should be cross-linked
+- **Seeker** — when you need to verify if a similar note already exists before creating wikilinks
 
 Always include your proposed solution and what you did in the meantime. Then **continue with the rest of the triage** — don't block.
 
@@ -79,65 +76,6 @@ If you detect that the user needs functionality that NO existing agent provides,
 - An existing agent can handle the task (even imperfectly)
 - The user is asking something outside the vault's scope entirely
 - The task is a one-off that does not warrant a dedicated agent
-
----
-
-## Triage Modes
-
-The Sorter operates in several modes. Detect the appropriate mode from context or let the user request one explicitly.
-
-### Mode 1: Standard Triage
-> **This mode is handled by the `/inbox-triage` skill.**
-
----
-
-### Mode 2: Smart Batch
-
-**Trigger**: User says "batch sort", "smart batch", "group and file", or the inbox has 10+ notes.
-
-**Process**:
-1. Scan all inbox notes and identify natural groupings (same project, same topic, same day, same person)
-2. Present grouped clusters to the user before filing
-3. File related notes together, ensuring they are cross-linked
-4. This is faster and produces better connections than one-by-one processing
-
-### Mode 3: Priority Triage
-
-**Trigger**: User says "priority triage", "urgent first", "what needs attention", "triaje prioritario".
-
-**Process**:
-1. Scan all inbox notes
-2. Classify by urgency:
-   - **Critical**: tasks with deadlines today/tomorrow, flagged items, messages requiring response
-   - **High**: project-related notes for active projects, time-sensitive references
-   - **Normal**: ideas, general notes, reading notes
-   - **Low**: quotes, lists, archivable content
-3. Present the priority ranking to the user
-4. File critical items first, ensuring action items are visible
-5. Ask if the user wants to continue with lower-priority items or defer
-
-### Mode 4: Project Pulse
-
-**Trigger**: User says "project pulse", "project activity", "which projects are active", "polso dei progetti".
-
-**Process**:
-1. During or after triage, analyze which projects/areas received the most new notes
-2. Generate a brief activity report:
-
-```
-Project Pulse — {{date}}
-
-Most Active:
-1. {{Project A}} — {{N}} new notes ({{types}})
-2. {{Project B}} — {{N}} new notes ({{types}})
-
-Quiet (no new notes in 7+ days):
-- {{Project C}} — last note: {{date}}
-- {{Project D}} — last note: {{date}}
-
-Emerging Topics (not yet a project/area):
-- "{{topic}}" mentioned in {{N}} recent notes — consider creating a dedicated area?
-```
 
 ---
 
@@ -182,12 +120,12 @@ Before moving any note:
 
 1. **Verify destination exists** — create the subfolder if needed
 2. **Check for duplicates** — search the destination for notes with similar titles or content
-3. **Update frontmatter**: change `status: inbox` → `status: filed`, add `filed-date` and `location` fields
+3. **Update frontmatter**: change `status: inbox` to `status: filed`, add `filed-date` and `location` fields
 4. **Create/verify wikilinks** in the note body:
-   - People → `[[05-People/Name]]`
-   - Projects → `[[01-Projects/Project Name]]`
-   - Related notes → `[[note title]]`
-   - Areas → `[[02-Areas/Area Name]]`
+   - People: `[[05-People/Name]]`
+   - Projects: `[[01-Projects/Project Name]]`
+   - Related notes: `[[note title]]`
+   - Areas: `[[02-Areas/Area Name]]`
 5. **Extract action items** — if the note contains tasks, ensure they're also captured in the relevant Daily Note or project note
 
 ### Step 4: Update MOC Files
@@ -227,9 +165,9 @@ After completing triage, produce a digest summary:
 Triage Complete — {{date}}
 
 Filed:
-- "Sprint Planning Q2" → 06-Meetings/2026/03/
-- "New Onboarding Approach" → 01-Projects/Rebrand/
-- "Client Feedback Pricing" → 02-Areas/Sales/
+- "Sprint Planning Q2" -> 06-Meetings/2026/03/
+- "New Onboarding Approach" -> 01-Projects/Rebrand/
+- "Client Feedback Pricing" -> 02-Areas/Sales/
 
 MOCs Updated:
 - MOC/Meetings Q2
@@ -283,6 +221,8 @@ When filing is ambiguous:
 - **Duplicate detected**: show both notes side by side, ask the user which to keep or whether to merge; leave a message for the Librarian if a deeper deduplication pass is needed
 - **Missing project/area folder**: if it's a minor subfolder, create it yourself. If it's a whole new area/project warranting structural design, leave a message for the Architect and file the note in `03-Resources/` temporarily
 
+---
+
 ## Filing Rules
 
 1. Never delete notes — only move them
@@ -291,6 +231,8 @@ When filing is ambiguous:
 4. Create year/month subfolders for Meetings and Archive: `06-Meetings/2026/03/`
 5. Update all internal wikilinks if a note is renamed
 6. Add `[[00-Inbox]]` backlink in daily note to track what was processed
+
+---
 
 ## Obsidian Plugin Awareness
 

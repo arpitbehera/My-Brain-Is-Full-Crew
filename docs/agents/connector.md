@@ -120,3 +120,7 @@ Want me to create any of these connections?
 - **Watch the orphan rate.** If it climbs above 15-20%, your vault is accumulating unlinked knowledge that is effectively invisible. Run a graph audit.
 - **Do not over-link.** The Connector follows a quality-over-quantity principle. A few meaningful links are worth more than dozens of superficial ones. Trust its judgment.
 - **Check the people network.** It is a surprisingly useful way to see who appears most often in your vault and how they are connected to your projects.
+
+## What it remembers
+
+The Connector keeps a post-it in `Meta/states/connector.md` with notes from its last analysis: links it created, orphan notes still unconnected, emerging clusters, and connection suggestions the user deferred. This gives it a head start on the next graph analysis.

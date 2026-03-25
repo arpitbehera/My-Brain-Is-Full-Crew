@@ -4,13 +4,17 @@
 
 ## What it does
 
-The Transcriber takes raw audio transcripts (meetings, lectures, podcasts, interviews, voice memos) and transforms them into richly structured Obsidian notes. It does not just clean up text. It extracts the intelligence: decisions made, action items with owners and deadlines, key insights, emotional dynamics, and follow-up needs.
+All transcription processing is now handled by the `/transcribe` skill, which runs as a guided, multi-turn conversation. The skill takes raw audio transcripts (meetings, lectures, podcasts, interviews, voice memos) and transforms them into richly structured Obsidian notes. It does not just clean up text. It extracts the intelligence: decisions made, action items with owners and deadlines, key insights, emotional dynamics, and follow-up needs.
 
-Paste a messy Zoom transcript full of filler words and speaker labels, and the Transcriber will produce a polished meeting note with an executive summary, a decisions log, an action items table with confidence scores, and even a draft follow-up email you can send to attendees. Paste lecture notes, and it creates study-ready material with key concepts, definitions, and exam-relevant highlights.
+Paste a messy Zoom transcript full of filler words and speaker labels, and the `/transcribe` skill will produce a polished meeting note with an executive summary, a decisions log, an action items table with confidence scores, and even a draft follow-up email you can send to attendees. Paste lecture notes, and it creates study-ready material with key concepts, definitions, and exam-relevant highlights.
 
-The Transcriber works with whatever you give it, whether that is output from Whisper, Otter.ai, Google Meet auto-transcription, or your own handwritten notes from a call. It adapts its parsing to the source format and asks just enough context questions to produce the best possible output.
+The `/transcribe` skill works with whatever you give it, whether that is output from Whisper, Otter.ai, Google Meet auto-transcription, or your own handwritten notes from a call. It adapts its parsing to the source format and asks just enough context questions to produce the best possible output.
+
+The Transcriber agent itself is kept for edge cases and direct follow-ups not covered by the skill.
 
 ## Capabilities
+
+All of the following capabilities are delivered through the `/transcribe` skill:
 
 - **Meeting notes**: full meeting processing with executive summary, key points, decisions log, action items table (with confidence scores), detailed notes by topic, open questions, next steps, and a follow-up email draft
 - **Lecture notes**: structured academic notes with key concepts, definitions, exam-relevant points, and connections to previous material
@@ -26,7 +30,7 @@ The Transcriber works with whatever you give it, whether that is output from Whi
 
 ## How to use it
 
-Paste a transcript or describe what you want to process:
+Paste a transcript or describe what you want to process. All of these phrases invoke the `/transcribe` skill:
 
 - "Transcribe this meeting: [paste transcript]"
 - "Process these meeting notes"
@@ -130,3 +134,7 @@ Saved as `2026-03-21 - Voice Journal - New Project Tensions.md`. Want to review 
 - **Check the confidence scores on action items.** "High" means someone explicitly said it. "Low" means the Transcriber inferred it from context, so verify these.
 - **Use voice journal mode for personal reflections.** It preserves your authentic voice instead of making everything sound corporate.
 - **Paste raw transcripts without cleanup.** The Transcriber handles filler words, broken sentences, and transcription artifacts. Do not waste time pre-editing.
+
+## What it remembers
+
+The Transcriber keeps a post-it in `Meta/states/transcriber.md` with notes from its last transcription: speaker names and roles it learned, meeting series context, and domain terminology it discovered. This means it gets better at identifying speakers and jargon over time.
