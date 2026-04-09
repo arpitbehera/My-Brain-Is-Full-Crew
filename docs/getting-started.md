@@ -112,7 +112,7 @@ When it's done, your vault will look like this:
 your-vault/
 ├── .claude/
 │   ├── agents/          ← 8 lightweight crew agents
-│   ├── skills/          ← 13 specialized skills for complex flows
+│   ├── skills/          ← 14 specialized skills for complex flows
 │   └── references/      ← shared docs the agents read
 ├── CLAUDE.md            ← project instructions
 ├── .codex/              ← Codex runtime mirror (agents, skills, references)

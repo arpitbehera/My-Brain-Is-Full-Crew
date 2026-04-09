@@ -1,7 +1,7 @@
 <h1 align="center">🧠 My Brain Is Full — Crew</h1>
 
 <p align="center">
-  <strong>A team of 8+ AI agents and 13 specialized skills that manage your Obsidian vault<br>so your brain doesn't have to.</strong>
+  <strong>A team of 8+ AI agents and 14 specialized skills that manage your Obsidian vault<br>so your brain doesn't have to.</strong>
 </p>
 
 <p align="center">
@@ -16,7 +16,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Agents-8%2B-blueviolet?style=flat-square" alt="8+ Agents" />
-  <img src="https://img.shields.io/badge/Skills-13-blue?style=flat-square" alt="13 Skills" />
+  <img src="https://img.shields.io/badge/Skills-14-blue?style=flat-square" alt="14 Skills" />
   <img src="https://img.shields.io/badge/Language-Any-success?style=flat-square" alt="Any Language" />
   <img src="https://img.shields.io/badge/Platform-Obsidian%20%2B%20Claude%20%2B%20Codex-blue?style=flat-square" alt="Obsidian + Claude + Codex" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
@@ -108,7 +108,7 @@ Key points:
 | 7 | **Transcriber** | Audio & Meetings | Turns recordings and transcripts into rich, structured meeting notes |
 | 8 | **Postman** | Email & Calendar | Bridges email (Gmail or Hey.com) and Google Calendar with your vault: deadline radar, meeting prep |
 
-> **Agents + Skills = the full system.** Each agent handles quick, reactive tasks. For complex multi-step workflows (like onboarding, email triage, or vault audits), the dispatcher routes to one of **13 specialized skills** that run as guided conversations. See the [Skills](#skills) section below.
+> **Agents + Skills = the full system.** Each agent handles quick, reactive tasks. For complex multi-step workflows (like onboarding, email triage, or vault audits), the dispatcher routes to one of **14 specialized skills** that run as guided conversations. See the [Skills](#skills) section below.
 
 ---
 
@@ -133,6 +133,7 @@ The dispatcher automatically routes your message to the right skill or agent. Yo
 | `/deep-clean` | Extended vault cleanup | Librarian |
 | `/tag-garden` | Tag analysis and cleanup | Librarian |
 | `/inbox-triage` | Process and route inbox notes | Sorter |
+| `/contact-sync` | Sync contacts to Apple Contacts (search, create, update) | Postman |
 
 ---
 
@@ -159,14 +160,14 @@ graph TB
     Claude -->|"no skill match?\ninvoke agent"| Agents
     Claude -->|"chains agents when needed"| Agents
 
-    subgraph Skills["Specialized Skills (13)"]
+    subgraph Skills["Specialized Skills (14)"]
         direction TB
         Onboarding["/onboarding"]
         EmailTriage["/email-triage"]
         Transcribe["/transcribe"]
         InboxTriage["/inbox-triage"]
         VaultAudit["/vault-audit"]
-        MoreSkills["... +8 more"]
+        MoreSkills["... +9 more"]
     end
 
     subgraph Agents["The Crew (8 agents)"]
@@ -378,6 +379,27 @@ You can use `gws` and `hey` simultaneously if you have both Gmail and Hey.com ac
 
 Both installer paths can set up `.mcp.json`. You still need to authorize connectors in your runtime client.
 
+### Optional: Apple Contacts
+
+The `/contact-sync` skill syncs contacts to Apple Contacts on macOS. It requires the **apple-contacts MCP server**:
+
+- **[@griches/apple-contacts-mcp](https://www.npmjs.com/package/@griches/apple-contacts-mcp)** — an MCP server that provides full CRUD access to Apple Contacts (search, create, update, delete contacts and groups).
+
+Add it to your `.mcp.json` inside the `mcpServers` object:
+
+```json
+{
+  "mcpServers": {
+    "apple-contacts": {
+      "command": "npx",
+      "args": ["-y", "@griches/apple-contacts-mcp"]
+    }
+  }
+}
+```
+
+Once connected, the `/contact-sync` skill auto-syncs contacts when you reply to emails or on demand ("sync contact", "add to contacts").
+
 All other agents and skills work with just your local Obsidian vault. No integrations needed.
 
 ### Updating
@@ -423,7 +445,7 @@ My-Brain-Is-Full-Crew/               ← cloned inside your vault
 │   ├── librarian.md                   Vault health & maintenance
 │   ├── transcriber.md                 Audio & meeting transcription
 │   └── postman.md                     Email & calendar integration
-├── skills/                          The 13 specialized skills
+├── skills/                          The 14 specialized skills
 │   ├── onboarding/SKILL.md            Full vault setup conversation
 │   ├── create-agent/SKILL.md          Design a custom agent step by step
 │   ├── manage-agent/SKILL.md          Edit, remove, or list custom agents
@@ -436,7 +458,8 @@ My-Brain-Is-Full-Crew/               ← cloned inside your vault
 │   ├── vault-audit/SKILL.md           Full 7-phase vault audit
 │   ├── deep-clean/SKILL.md            Extended vault cleanup
 │   ├── tag-garden/SKILL.md            Tag analysis and cleanup
-│   └── inbox-triage/SKILL.md          Process and route inbox notes
+│   ├── inbox-triage/SKILL.md          Process and route inbox notes
+│   └── contact-sync/SKILL.md          Sync contacts to Apple Contacts
 ├── references/                      Shared agent documentation
 ├── scripts/
 │   ├── launchme.sh                    First-time installer

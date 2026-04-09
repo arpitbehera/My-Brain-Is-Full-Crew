@@ -31,7 +31,7 @@ try {
   $codexAgents = (Get-ChildItem -LiteralPath (Join-Path $vaultDir '.codex/agents') -Filter *.md -File).Count
   $codexSkills = (Get-ChildItem -LiteralPath (Join-Path $vaultDir '.codex/skills') -Directory).Count
   Assert-True ($codexAgents -eq 8) "Expected 8 Codex agents, got $codexAgents"
-  Assert-True ($codexSkills -eq 13) "Expected 13 Codex skills, got $codexSkills"
+  Assert-True ($codexSkills -eq 14) "Expected 14 Codex skills, got $codexSkills"
 
   $bad = Get-ChildItem -LiteralPath (Join-Path $vaultDir '.codex') -Recurse -File -Include *.md,*.sh,*.ps1 |
     Select-String -Pattern '\.claude/|\bCLAUDE\.md\b|AskUserQuestion|Skill tool|Agent tool' -SimpleMatch:$false -CaseSensitive
