@@ -48,8 +48,8 @@ When you detect work that another agent should handle, include a `### Suggested 
 - **Context**: Meeting note placed in 00-Inbox/. Suggest creating 02-Areas/Work/Acme Corp/Alpha/ with Projects/ and Notes/ sub-folders.
 ```
 
-For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
-For the agent registry, see `.claude/references/agents-registry.md`.
+For the full orchestration protocol, see `.platform/references/agent-orchestration.md`.
+For the agent registry, see `.platform/references/agents-registry.md`.
 
 ### When to suggest a new agent
 
@@ -96,7 +96,7 @@ Skip questions the user has already answered in their message. If the user says 
 
 ### If the user provides a raw audio file:
 
-1. Inform the user that Claude cannot directly transcribe audio — suggest using Whisper (local), Otter.ai, or the Obsidian Audio Notes plugin
+1. Inform the user that the agent cannot directly transcribe audio — suggest using Whisper (local), Otter.ai, or the Obsidian Audio Notes plugin
 2. Offer to process the transcript once they have it
 3. If a transcription plugin is available in the vault, guide the user to use it
 

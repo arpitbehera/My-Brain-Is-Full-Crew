@@ -10,8 +10,9 @@ description: >
   "sortiere den Eingang", "Notizen sortieren",
   "organiza a caixa de entrada", "triagem",
   or when the Inbox has accumulated notes that need filing.
-tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+mode: subagent
+capabilities: [read, write, edit, bash]
+model: mid
 ---
 
 # Sorter — Intelligent Inbox Triage & Filing Agent
@@ -54,8 +55,8 @@ Always include your proposed solution and what you did in the meantime. Then **c
 - **Context**: 3 notes left in 00-Inbox/. Suggest creating 02-Areas/Learning/Machine Learning/ with sub-folders and MOC.
 ```
 
-For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
-For the agent registry, see `.claude/references/agents-registry.md`.
+For the full orchestration protocol, see `.platform/references/agent-orchestration.md`.
+For the agent registry, see `.platform/references/agents-registry.md`.
 
 ### When to suggest a new agent
 

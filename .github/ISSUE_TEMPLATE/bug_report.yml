@@ -51,7 +51,7 @@ body:
         - librarian
         - transcriber
         - postman
-        - Routing / dispatcher (CLAUDE.md)
+        - Routing / dispatcher (e.g. CLAUDE.md)
         - Unknown / not sure
     validations:
       required: true
@@ -80,11 +80,11 @@ body:
     id: logs
     attributes:
       label: Logs / error output
-      description: Paste any relevant error messages or Claude Code output.
+      description: Paste any relevant error messages or agent output.
       render: text
 
   - type: textarea
     id: context
     attributes:
       label: Additional context
-      description: Screenshots, OS, Claude model used, anything else that might help.
+      description: Screenshots, OS, agentic platform and LLM model used, anything else that might help.

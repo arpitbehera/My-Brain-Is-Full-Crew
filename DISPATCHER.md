@@ -4,13 +4,13 @@
 
 ## ABSOLUTE CONSTRAINT: ONLY skills and agents from THIS project
 
-Your crew consists of **14 skills** (in `.claude/skills/`) and **8 core agents** (in `.claude/agents/`). Claude Code auto-loads both at session start.
+Your crew consists of **14 skills** (in `.platform/skills/`) and **8 core agents** (in `.platform/agents/`). Your agent platform auto-loads both at session start.
 
 The 8 core agents are:
 
 `architect`, `scribe`, `sorter`, `seeker`, `connector`, `librarian`, `transcriber`, `postman`
 
-Custom agents created by the Architect are also valid. Check `.claude/references/agents-registry.md` for the full list of active agents (core + custom).
+Custom agents created by the Architect are also valid. Check `.platform/references/agents-registry.md` for the full list of active agents (core + custom).
 
 **NEVER USE:**
 - External plugins, third-party tools, or MCP servers not defined here
@@ -70,7 +70,7 @@ When a message does NOT match any skill trigger above, use this table. Activate 
 | 6 | **sorter** | Smart batch, priority triage, project pulse (NOT standard inbox triage — that's a skill) |
 | 7 | **connector** | Links between notes, graph, MOCs, relationships, cross-linking |
 | 8 | **librarian** | Quick health check, consistency report, growth analytics, stale content (NOT full audit, deep clean, or tag garden — those are skills) |
-| 9+ | **custom agents** | Any agent created via the Architect. Check `.claude/references/agents-registry.md` for triggers and capabilities. Custom agents always have lower priority than core 8. |
+| 9+ | **custom agents** | Any agent created via the Architect. Check `.platform/references/agents-registry.md` for triggers and capabilities. Custom agents always have lower priority than core 8. |
 
 ---
 
@@ -152,7 +152,7 @@ Triggers: "quick check", "consistency report", "growth analytics", "stale conten
 
 ## 9. CUSTOM AGENTS
 
-Custom agents are created via the `/create-agent` skill and stored in `.claude/agents/`. They are auto-discovered by Claude Code like core agents. When a user message does not match any skill or core agent, check `.claude/references/agents-registry.md` for custom agents whose Input column matches the message. If a match is found, delegate to that agent.
+Custom agents are created via the `/create-agent` skill and stored in `.platform/agents/`. They are auto-discovered like core agents. When a user message does not match any skill or core agent, check `.platform/references/agents-registry.md` for custom agents whose Input column matches the message. If a match is found, delegate to that agent.
 
 ---
 
@@ -167,7 +167,7 @@ The dispatcher is a **reactive multi-router**. After invoking an agent, analyze 
 5. Did the agent include a `### Suggested next agent` section? → Validate and consider it
 6. Did the agent include a `### Suggested new agent` section? → Ask the user if they want the **Architect** to create a custom agent for the detected need
 
-Consult `.claude/references/agents-registry.md` to validate suggestions and match output to agent capabilities.
+Consult `.platform/references/agents-registry.md` to validate suggestions and match output to agent capabilities.
 
 ### Call chain tracking
 
@@ -209,7 +209,7 @@ Agents do NOT communicate directly with each other. The dispatcher orchestrates 
 
 When an agent detects work for another agent (e.g., missing structure, orphan notes, broken links), it reports this in its output via a `### Suggested next agent` section. The dispatcher reads this and decides whether to chain the next agent.
 
-See `.claude/references/agent-orchestration.md` for the full protocol and `.claude/references/agents-registry.md` for the agent registry.
+See `.platform/references/agent-orchestration.md` for the full protocol and `.platform/references/agents-registry.md` for the agent registry.
 
 ---
 
@@ -239,12 +239,12 @@ cd My-Brain-Is-Full-Crew
 bash scripts/launchme.sh
 ```
 
-The script asks a couple of questions and copies everything into `.claude/` inside your vault:
+The script asks a couple of questions and copies everything into `.platform/` inside your vault:
 
 ```
 your-vault/
-├── .claude/
-│   ├── agents/          ← 8 crew agents (auto-loaded by Claude Code)
+├── .platform/
+│   ├── agents/          ← 8 crew agents (auto-loaded at session start)
 │   └── references/      ← shared docs the agents read
 ├── .mcp.json            ← Gmail + Calendar (optional, if you chose yes)
 ├── My-Brain-Is-Full-Crew/  ← the repo (for updates)
@@ -253,7 +253,7 @@ your-vault/
 
 ### Step 4: Initialize
 
-1. Open Claude Code **inside your vault folder**
+1. Open your agent platform **inside your vault folder**
 2. Say: **"Initialize my vault"**
 3. The Architect agent runs onboarding — creates your folder structure, templates, and preferences
 
@@ -269,7 +269,7 @@ Only changed files are overwritten. Your vault notes are never touched.
 
 ## Requirements
 
-- **Claude Code** with a Claude Pro, Max, or Team subscription
+- A supported **agent platform** (see the README for details)
 - **Obsidian** (free) — [obsidian.md](https://obsidian.md)
 - **Gmail / Google Calendar** (optional) — only for the Postman agent
 
@@ -291,8 +291,7 @@ My-Brain-Is-Full-Crew/
 ├── scripts/
 │   ├── launchme.sh             First-time installer
 │   └── updateme.sh             Post-pull updater
-├── .claude-plugin/plugin.json  Plugin manifest (for --plugin-dir)
-├── .mcp.json                 MCP servers (Gmail, Google Calendar)
+├── mcp/servers.yaml          MCP server definitions (source of truth)
 ├── README.md
 ├── CONTRIBUTING.md
 └── LICENSE
@@ -304,9 +303,9 @@ All agent files are written in English. Agents automatically respond in whatever
 
 ## Architecture
 
-Each agent is defined in `.claude/agents/{name}.md` (in the destination vault) with YAML frontmatter (`name`, `description`, `tools`, `model`) and a full system prompt body. Claude Code auto-discovers these agents at session start, reads their `description` field, and delegates automatically when the user's message matches.
+Each agent is defined in `.platform/agents/{name}.md` (in the destination vault) with YAML frontmatter and a full system prompt body. The platform auto-discovers these agents at session start, reads their `description` field, and delegates automatically when the user's message matches.
 
-The CLAUDE.md routing rules REINFORCE this auto-delegation — they provide explicit priority ordering and trigger lists to ensure Claude delegates correctly.
+The dispatcher routing rules reinforce this auto-delegation — they provide explicit priority ordering and trigger lists to ensure correct delegation.
 
 Key design decisions:
 
@@ -314,22 +313,12 @@ Key design decisions:
 - **Architect** and **Librarian** have full access including Bash for structural operations
 - **Postman** uses email (Gmail via `gws`, Hey.com via `hey` CLI) and Google Calendar for full read/write access, with MCP servers (`.mcp.json`) as a read-only fallback. See `docs/gws-setup-guide.md` for GWS setup
 - All agents auto-activate based on their `description` field — just talk naturally
-- Agents reference shared docs at `.claude/references/`
+- Agents reference shared docs at `.platform/references/`
 
-## Alternative: load as plugin (CLI)
-
-If you prefer not to clone into the vault:
+## Installation
 
 ```bash
-claude --plugin-dir /path/to/My-Brain-Is-Full-Crew
+bash scripts/launchme.sh --platform <claude-code|opencode|gemini-cli>
 ```
 
-This loads agents + MCP for the current session. You still need to run `launchme.sh` to set up `.claude/references/` in the vault.
-
-## Development
-
-```bash
-claude --plugin-dir ./
-```
-
-Use `/reload-plugins` to pick up changes without restarting.
+This builds the source files for your platform and installs them into your vault. See the README for platform-specific details.

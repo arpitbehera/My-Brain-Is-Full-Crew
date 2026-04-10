@@ -33,7 +33,7 @@ body:
       description: Which part of the project does this affect?
       options:
         - Specific agent (specify below)
-        - Routing / CLAUDE.md
+        - Routing / Dispatcher / CLAUDE.md
         - Installer / scripts
         - Documentation
         - References / shared docs

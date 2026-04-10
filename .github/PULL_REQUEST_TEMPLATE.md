@@ -29,9 +29,9 @@
 - [ ] I have read the [Contributing Guide](CONTRIBUTING.md)
 - [ ] Agent files are written in English
 - [ ] Trigger phrases include at least English and Italian
-- [ ] New/modified agents follow the frontmatter format (`name`, `description`, `tools`, `model`)
+- [ ] New/modified agents follow the source frontmatter format (`name`, `description`, `capabilities`, `model`)
 - [ ] Inter-agent messaging protocol is respected (if applicable)
-- [ ] I have tested this with `claude --plugin-dir ./`
+- [ ] I have tested this with at least one platform (`bash scripts/build.sh --platform claude-code`)
 
 ---
 

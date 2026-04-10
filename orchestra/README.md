@@ -10,7 +10,7 @@ Claude Code prompts the user for permission on every novel Bash command. When ag
 
 The installer (`scripts/launchme.sh`) copies these to `Meta/scripts/` inside your vault. They derive their vault path from their own location, so no configuration is needed.
 
-After installation, add the orchestra scripts to your Claude Code permission allowlist. In `~/.claude/settings.json`, merge these entries into the `permissions.allow` array:
+After installation, add the orchestra scripts to your agentic platform's permission allowlist. E.g. in `~/.claude/settings.json`, merge these entries into the `permissions.allow` array:
 
 ```json
 {

@@ -7,155 +7,203 @@
 #   cd /path/to/your-vault/My-Brain-Is-Full-Crew
 #   bash scripts/launchme.sh
 #
-# It copies agents and references into your vault's .claude/ directory.
+# It builds and copies agents, skills, references, hooks, and settings into
+# the vault's platform directory.
+#
+# Options:
+#   --platform <name>    Platform to build for (interactive selection if omitted)
+#   --target <path>      Override the vault destination path
 # =============================================================================
 
 set -eo pipefail
 
-# ── Colors ──────────────────────────────────────────────────────────────────
-if [[ -t 1 ]]; then
-  GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'
-  RED='\033[0;31m'; BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
-else
-  GREEN=''; CYAN=''; YELLOW=''; RED=''; BOLD=''; DIM=''; NC=''
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib.sh
+source "$SCRIPT_DIR/lib.sh"
+
+resolve_paths "${BASH_SOURCE[0]}"
+
+# ── Parse args ─────────────────────────────────────────────────────────────
+PLATFORM=""
+TARGET_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --platform) PLATFORM="$2"; shift 2 ;;
+    --target)    TARGET_OVERRIDE="$2"; shift 2 ;;
+    *) die "Unknown argument: $1 (use --platform <name> or --target <path>)" ;;
+  esac
+done
+[[ -n "$TARGET_OVERRIDE" ]] && VAULT_DIR="$TARGET_OVERRIDE"
+
+# ── Platform selection (interactive if not specified) ──────────────────────
+if [[ -z "$PLATFORM" ]]; then
+  # Discover available platforms from adapters/ directories
+  AVAILABLE=()
+  for d in "$REPO_DIR/adapters/"*/; do
+    [[ -f "${d}adapter.sh" ]] || continue
+    AVAILABLE+=("$(basename "$d")")
+  done
+  if [[ ${#AVAILABLE[@]} -eq 0 ]]; then
+    die "No adapters found in adapters/"
+  fi
+  echo ""
+  echo -e "   ${BOLD}Select your agent platform:${NC}"
+  echo ""
+  for i in "${!AVAILABLE[@]}"; do
+    echo -e "   ${BOLD}$((i+1)))${NC} ${AVAILABLE[$i]}"
+  done
+  echo ""
+  if ! read -r -p "   > " PLATFORM_CHOICE 2>/dev/null; then PLATFORM_CHOICE=""; fi
+  # Accept either number or name
+  if [[ "$PLATFORM_CHOICE" =~ ^[0-9]+$ ]] && (( PLATFORM_CHOICE >= 1 && PLATFORM_CHOICE <= ${#AVAILABLE[@]} )); then
+    PLATFORM="${AVAILABLE[$((PLATFORM_CHOICE-1))]}"
+  else
+    # Try matching by name
+    for p in "${AVAILABLE[@]}"; do
+      if [[ "$p" == "$PLATFORM_CHOICE" ]]; then
+        PLATFORM="$p"
+        break
+      fi
+    done
+  fi
+  [[ -n "$PLATFORM" ]] || die "Invalid selection: $PLATFORM_CHOICE"
+  echo ""
+  info "Selected platform: $PLATFORM"
 fi
 
-info()    { echo -e "   ${CYAN}>${NC} $*"; }
-success() { echo -e "   ${GREEN}✓${NC} $*"; }
-warn()    { echo -e "   ${YELLOW}!${NC} $*"; }
-die()     { echo -e "\n   ${RED}Error: $*${NC}\n" >&2; exit 1; }
-
-# ── Find paths ──────────────────────────────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VAULT_DIR="$(cd "$REPO_DIR/.." && pwd)"
-
-# Sanity checks
-[[ -d "$REPO_DIR/agents" ]] || die "Can't find agents/ in $REPO_DIR — are you running this from the repo?"
-[[ -d "$REPO_DIR/references" ]] || die "Can't find references/ in $REPO_DIR"
-
-# ── Banner ──────────────────────────────────────────────────────────────────
-echo ""
-echo -e "${BOLD}╔══════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}║  My Brain Is Full - Crew :: Setup        ║${NC}"
-echo -e "${BOLD}╚══════════════════════════════════════════╝${NC}"
-echo ""
+# ── Banner ────────────────────────────────────────────────────────────────────
+print_banner "Setup        "
 echo -e "   Repo:   ${BOLD}${REPO_DIR}${NC}"
 echo -e "   Vault:  ${BOLD}${VAULT_DIR}${NC}"
 echo ""
 
-# ── Confirm vault location ─────────────────────────────────────────────────
-echo -e "${BOLD}Is this your Obsidian vault folder?${NC}"
-echo -e "   ${DIM}${VAULT_DIR}${NC}"
-echo ""
-echo -e "   ${BOLD}y)${NC} Yes, install here"
-echo -e "   ${BOLD}n)${NC} No, let me type the correct path"
-if ! read -r -p "   > " CONFIRM 2>/dev/null; then CONFIRM=""; fi
-
-if [[ "$CONFIRM" =~ ^[Nn]$ ]]; then
+# ── Confirm vault location ────────────────────────────────────────────────────
+if [[ -z "$TARGET_OVERRIDE" ]]; then
+  echo -e "${BOLD}Is this your Obsidian vault folder?${NC}"
+  echo -e "   ${DIM}${VAULT_DIR}${NC}"
   echo ""
-  echo -e "${BOLD}Enter the full path to your Obsidian vault:${NC}"
-  if ! read -r -p "   > " VAULT_DIR 2>/dev/null; then die "Cannot read input — are you running in a non-interactive shell?"; fi
-  VAULT_DIR="${VAULT_DIR/#\~/$HOME}"
-  [[ -d "$VAULT_DIR" ]] || die "Directory not found: $VAULT_DIR"
+  echo -e "   ${BOLD}y)${NC} Yes, install here"
+  echo -e "   ${BOLD}n)${NC} No, let me type the correct path"
+  if ! read -r -p "   > " CONFIRM 2>/dev/null; then CONFIRM=""; fi
+
+  if [[ "$CONFIRM" =~ ^[Nn]$ ]]; then
+    echo ""
+    echo -e "${BOLD}Enter the full path to your Obsidian vault:${NC}"
+    if ! read -r -p "   > " VAULT_DIR 2>/dev/null; then
+      die "Cannot read input — are you running in a non-interactive shell?"
+    fi
+    VAULT_DIR="${VAULT_DIR/#\~/$HOME}"
+    [[ -d "$VAULT_DIR" ]] || die "Directory not found: $VAULT_DIR"
+  fi
 fi
 
-# ── Check for existing installation ───────────────────────────────────────
-echo ""
+# ── Check for existing installation ──────────────────────────────────────────
 EXISTING=0
-if [[ -d "$VAULT_DIR/.claude" ]]; then EXISTING=1; fi
-if [[ -f "$VAULT_DIR/CLAUDE.md" ]]; then EXISTING=1; fi
+[[ -d "$VAULT_DIR/.claude" ]]    && EXISTING=1
+[[ -d "$VAULT_DIR/.opencode" ]]  && EXISTING=1
+[[ -d "$VAULT_DIR/.gemini" ]]    && EXISTING=1
+[[ -f "$VAULT_DIR/CLAUDE.md" ]]  && EXISTING=1
+[[ -f "$VAULT_DIR/AGENTS.md" ]]  && EXISTING=1
+[[ -f "$VAULT_DIR/GEMINI.md" ]]  && EXISTING=1
 
 if [[ $EXISTING -eq 1 ]]; then
   warn "An existing installation was detected:"
-  [[ -d "$VAULT_DIR/.claude" ]] && warn "  .claude/ directory exists"
+  [[ -d "$VAULT_DIR/.claude" ]]   && warn "  .claude/ directory exists"
+  [[ -d "$VAULT_DIR/.opencode" ]] && warn "  .opencode/ directory exists"
+  [[ -d "$VAULT_DIR/.gemini" ]]   && warn "  .gemini/ directory exists"
   [[ -f "$VAULT_DIR/CLAUDE.md" ]] && warn "  CLAUDE.md exists"
+  [[ -f "$VAULT_DIR/AGENTS.md" ]] && warn "  AGENTS.md exists"
+  [[ -f "$VAULT_DIR/GEMINI.md" ]] && warn "  GEMINI.md exists"
   echo ""
-  echo -e "   ${BOLD}The installer needs to overwrite these files.${NC}"
-  echo -e "   ${DIM}Custom agents in .claude/agents/ will NOT be deleted.${NC}"
+  echo -e "   ${BOLD}The installer will overwrite core files. Custom agents are never deleted.${NC}"
   echo -e "   ${DIM}Your vault notes are never touched.${NC}"
   echo ""
-  echo -e "   ${BOLD}c)${NC} Continue (overwrite core files, keep custom agents)"
+  echo -e "   ${BOLD}c)${NC} Continue"
   echo -e "   ${BOLD}q)${NC} Quit"
-  if ! read -r -p "   > " OVERWRITE_ANSWER 2>/dev/null; then OVERWRITE_ANSWER=""; fi
-  if [[ ! "$OVERWRITE_ANSWER" =~ ^[Cc]$ ]]; then
-    echo ""
-    info "Installation cancelled."
-    echo ""
-    exit 0
+  if ! read -r -p "   > " ANSWER 2>/dev/null; then ANSWER=""; fi
+  if [[ ! "$ANSWER" =~ ^[Cc]$ ]]; then
+    echo ""; info "Installation cancelled."; echo ""; exit 0
   fi
 fi
 
-# ── Deprecate stale core agents on reinstall ─────────────────────────────
 echo ""
-mkdir -p "$VAULT_DIR/.claude/agents"
-OLD_MANIFEST="$VAULT_DIR/.claude/agents/.core-manifest"
-if [[ $EXISTING -eq 1 && -f "$OLD_MANIFEST" ]]; then
-  while IFS= read -r old_name; do
-    [[ -z "$old_name" ]] && continue
-    [[ -f "$REPO_DIR/agents/$old_name" ]] && continue
-    vault_file="$VAULT_DIR/.claude/agents/$old_name"
-    [[ -f "$vault_file" ]] || continue
-    deprecated_name="${old_name%.md}-DEPRECATED.md"
-    mkdir -p "$VAULT_DIR/.claude/deprecated"
-    [[ -f "$VAULT_DIR/.claude/deprecated/$deprecated_name" ]] && continue
-    mv "$vault_file" "$VAULT_DIR/.claude/deprecated/$deprecated_name"
-    { echo "########"; echo "DEPRECATED DO NOT USE"; echo "########"; echo ""; cat "$VAULT_DIR/.claude/deprecated/$deprecated_name"; } > "$VAULT_DIR/.claude/deprecated/$deprecated_name.tmp"
-    mv "$VAULT_DIR/.claude/deprecated/$deprecated_name.tmp" "$VAULT_DIR/.claude/deprecated/$deprecated_name"
-    warn "Deprecated stale agent: $old_name -> deprecated/$deprecated_name"
-  done < "$OLD_MANIFEST"
+
+# ── Build the platform dist ───────────────────────────────────────────────
+info "Building $PLATFORM adapter..."
+bash "$SCRIPT_DIR/build.sh" --platform "$PLATFORM"
+DIST_DIR="$REPO_DIR/dist/$PLATFORM"
+[[ -d "$DIST_DIR" ]] || die "Build did not produce $DIST_DIR"
+
+# ── Platform-specific install layout ────────────────────────────────────────
+case "$PLATFORM" in
+  claude-code)
+    DIST_COMPONENTS_DIR="$DIST_DIR/.claude"
+    VAULT_COMPONENTS_DIR="$VAULT_DIR/.claude"
+    DISPATCHER_SRC="$DIST_DIR/CLAUDE.md"
+    DISPATCHER_DST="$VAULT_DIR/CLAUDE.md"
+    MCP_SRC="$DIST_DIR/.mcp.json"
+    MCP_DST="$VAULT_DIR/.mcp.json"
+    HAS_PLUGINS=0
+    ;;
+  opencode)
+    DIST_COMPONENTS_DIR="$DIST_DIR/.opencode"
+    VAULT_COMPONENTS_DIR="$VAULT_DIR/.opencode"
+    DISPATCHER_SRC="$DIST_DIR/AGENTS.md"
+    DISPATCHER_DST="$VAULT_DIR/AGENTS.md"
+    MCP_SRC="$DIST_DIR/opencode.json"
+    MCP_DST="$VAULT_DIR/opencode.json"
+    HAS_PLUGINS=1
+    ;;
+  gemini-cli)
+    DIST_COMPONENTS_DIR="$DIST_DIR/.gemini"
+    VAULT_COMPONENTS_DIR="$VAULT_DIR/.gemini"
+    DISPATCHER_SRC="$DIST_DIR/GEMINI.md"
+    DISPATCHER_DST="$VAULT_DIR/GEMINI.md"
+    MCP_SRC=""
+    MCP_DST=""
+    HAS_PLUGINS=0
+    ;;
+  *)
+    die "Unknown platform: $PLATFORM (install layout not defined)"
+    ;;
+esac
+PLATFORM_VAULT_DIR="$VAULT_COMPONENTS_DIR"
+
+# Load opencode-specific helpers when building for opencode
+if [[ "$PLATFORM" == "opencode" ]]; then
+  # shellcheck source=adapters/opencode/config-merge.sh
+  source "$REPO_DIR/adapters/opencode/config-merge.sh"
 fi
 
-# ── Copy agents ─────────────────────────────────────────────────────────────
-info "Creating .claude/agents/ in vault..."
+# ── Migrate legacy manifests (if any) ────────────────────────────────────────
+manifest_migrate
 
-AGENT_COUNT=0
-: > "$VAULT_DIR/.claude/agents/.core-manifest"
-for agent in "$REPO_DIR/agents/"*.md; do
-  cp "$agent" "$VAULT_DIR/.claude/agents/"
-  basename "$agent" >> "$VAULT_DIR/.claude/agents/.core-manifest"
-  AGENT_COUNT=$((AGENT_COUNT + 1))
-done
-success "Copied $AGENT_COUNT agents"
+# ── Deprecate agents/refs removed from repo (reinstall only) ─────────────────
+DEP_COUNT=0
+if [[ $EXISTING -eq 1 ]]; then
+  DEP_COUNT=$(deprecate_removed "agents"     "$DIST_COMPONENTS_DIR/agents"     "$VAULT_COMPONENTS_DIR/agents")
+  DEP_COUNT=$((DEP_COUNT + $(deprecate_removed "references" "$DIST_COMPONENTS_DIR/references" "$VAULT_COMPONENTS_DIR/references")))
+fi
 
-# ── Create Meta/states/ for agent post-its ──────────────────────────────────
+# ── Ensure vault support dirs ─────────────────────────────────────────────────
 mkdir -p "$VAULT_DIR/Meta/states"
-info "Created Meta/states/ (agent post-it directory)"
 
-# ── Copy references ─────────────────────────────────────────────────────────
-info "Creating .claude/references/ in vault..."
-mkdir -p "$VAULT_DIR/.claude/references"
-# User-mutable references (modified by Architect when creating custom agents)
-USER_MUTABLE_REFS="agents-registry.md agents.md"
+# ── Install components ────────────────────────────────────────────────────────
+info "Installing agents..."
+AGENT_COUNT=$(install_agents "$DIST_COMPONENTS_DIR/agents" "$VAULT_COMPONENTS_DIR/agents")
+success "Agents: $AGENT_COUNT installed/updated"
 
-: > "$VAULT_DIR/.claude/references/.core-manifest"
-for ref in "$REPO_DIR/references/"*.md; do
-  ref_name="$(basename "$ref")"
-  # On reinstall, preserve user-mutable reference files
-  if [[ $EXISTING -eq 1 && -f "$VAULT_DIR/.claude/references/$ref_name" ]]; then
-    if [[ " $USER_MUTABLE_REFS " == *" $ref_name "* ]]; then
-      warn "Preserving existing $ref_name (run updateme.sh to merge upstream changes)"
-      echo "$ref_name" >> "$VAULT_DIR/.claude/references/.core-manifest"
-      continue
-    fi
-  fi
-  cp "$ref" "$VAULT_DIR/.claude/references/"
-  echo "$ref_name" >> "$VAULT_DIR/.claude/references/.core-manifest"
-done
-success "Copied references"
+info "Installing references..."
+REF_COUNT=$(install_refs "$DIST_COMPONENTS_DIR/references" "$VAULT_COMPONENTS_DIR/references")
+success "References: $REF_COUNT installed/updated"
 
-# ── Copy skills ──────────────────────────────────────────────────────────────
-SKILL_COUNT=0
-if [[ -d "$REPO_DIR/skills" ]]; then
-  for skill_dir in "$REPO_DIR/skills/"*/; do
-    [[ -f "$skill_dir/SKILL.md" ]] || continue
-    skill_name="$(basename "$skill_dir")"
-    mkdir -p "$VAULT_DIR/.claude/skills/$skill_name"
-    cp "$skill_dir"SKILL.md "$VAULT_DIR/.claude/skills/$skill_name/"
-    SKILL_COUNT=$((SKILL_COUNT + 1))
-  done
-  success "Copied $SKILL_COUNT skills"
-fi
+info "Installing skills..."
+SKILL_COUNT=$(install_skills "$DIST_COMPONENTS_DIR/skills" "$VAULT_COMPONENTS_DIR/skills")
+success "Skills: $SKILL_COUNT installed/updated"
+
+info "Installing hooks..."
+HOOK_COUNT=$(install_hooks "$DIST_COMPONENTS_DIR/hooks" "$VAULT_COMPONENTS_DIR/hooks")
+success "Hooks: $HOOK_COUNT installed/updated"
 
 # ── Deprecate stale orchestra scripts on reinstall ──────────────────────────
 OLD_ORCH_MANIFEST="$VAULT_DIR/Meta/scripts/.core-manifest"
@@ -187,81 +235,68 @@ if [[ -d "$REPO_DIR/orchestra" ]]; then
   success "Copied $ORCH_COUNT orchestra scripts to Meta/scripts/"
 fi
 
-# ── Copy CLAUDE.md ───────────────────────────────────────────────────────────
-if [[ -f "$REPO_DIR/CLAUDE.md" ]]; then
-  cp "$REPO_DIR/CLAUDE.md" "$VAULT_DIR/CLAUDE.md"
-  success "Copied CLAUDE.md"
+PLUGIN_COUNT=0
+if [[ $HAS_PLUGINS -eq 1 && -d "$DIST_COMPONENTS_DIR/plugins" ]]; then
+  info "Installing plugins..."
+  PLUGIN_COUNT=$(install_plugins "$DIST_COMPONENTS_DIR/plugins" "$VAULT_COMPONENTS_DIR/plugins")
+  success "Plugins: $PLUGIN_COUNT installed/updated"
 fi
 
-# ── Copy hooks ───────────────────────────────────────────────────────────────
-HOOK_COUNT=0
-if [[ -d "$REPO_DIR/hooks" ]]; then
-  mkdir -p "$VAULT_DIR/.claude/hooks"
-  for hook in "$REPO_DIR/hooks/"*.sh; do
-    [[ -f "$hook" ]] || continue
-    cp "$hook" "$VAULT_DIR/.claude/hooks/"
-    chmod +x "$VAULT_DIR/.claude/hooks/$(basename "$hook")"
-    HOOK_COUNT=$((HOOK_COUNT + 1))
-  done
-  success "Copied $HOOK_COUNT hooks"
+# settings.json only exists for claude-code (hook config lives in the JS plugin on opencode)
+if [[ -f "$DIST_COMPONENTS_DIR/settings.json" ]]; then
+  install_settings "$DIST_COMPONENTS_DIR/settings.json" "$VAULT_COMPONENTS_DIR"
 fi
 
-# ── Copy settings.json ───────────────────────────────────────────────────────
-if [[ -f "$REPO_DIR/settings.json" ]]; then
-  if [[ -f "$VAULT_DIR/.claude/settings.json" ]]; then
-    warn ".claude/settings.json already exists — skipping (won't overwrite)"
+install_dispatcher "$DISPATCHER_SRC" "$DISPATCHER_DST"
+
+# ── MCP / opencode.json ───────────────────────────────────────────────────────
+if [[ -f "$MCP_SRC" ]]; then
+  if [[ "$PLATFORM" == "opencode" && -f "$MCP_DST" ]]; then
+    oc_config_merge "$MCP_SRC" "$MCP_DST" "$MCP_DST"
+    info "Merged opencode.json (user config preserved)"
   else
-    mkdir -p "$VAULT_DIR/.claude"
-    cp "$REPO_DIR/settings.json" "$VAULT_DIR/.claude/settings.json"
-    success "Copied settings.json (hooks configuration)"
+    copy_if_changed "$MCP_SRC" "$MCP_DST"
   fi
 fi
 
-# ── MCP servers (Gmail + Calendar) ──────────────────────────────────────────
-echo ""
-echo -e "${BOLD}Do you use Gmail, Hey.com, or Google Calendar?${NC}"
-echo -e "   ${DIM}The Postman agent can read your inbox and calendar.${NC}"
-echo -e "   ${DIM}Gmail uses MCP connectors (read-only). For full access, set up GWS CLI later.${NC}"
-echo -e "   ${DIM}Hey.com uses the Hey CLI (install from https://github.com/basecamp/hey-cli).${NC}"
-echo -e "   ${DIM}You can always add this later.${NC}"
-echo ""
-echo -e "   ${BOLD}y)${NC} Yes, set up Gmail + Calendar (MCP connectors)"
-echo -e "   ${BOLD}n)${NC} No, skip for now"
-if ! read -r -p "   > " MCP_ANSWER 2>/dev/null; then MCP_ANSWER=""; fi
-
-if [[ "$MCP_ANSWER" =~ ^[Yy]$ ]]; then
-  if [[ -f "$VAULT_DIR/.mcp.json" ]]; then
-    warn ".mcp.json already exists — skipping (won't overwrite)"
-  else
-    cp "$REPO_DIR/.mcp.json" "$VAULT_DIR/.mcp.json"
-    success "Created .mcp.json (Gmail + Google Calendar)"
-  fi
-else
-  info "Skipped MCP setup"
-fi
-
-# ── Done ────────────────────────────────────────────────────────────────────
+# ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}${BOLD}   Setup complete!${NC}"
 echo ""
-echo -e "   Your vault is ready. Here's what was installed:"
-echo ""
 echo -e "   ${VAULT_DIR}/"
-echo -e "   ├── .claude/"
-echo -e "   │   ├── agents/          ${DIM}← ${AGENT_COUNT} crew agents${NC}"
-echo -e "   │   ├── skills/          ${DIM}← ${SKILL_COUNT:-0} crew skills (Desktop/Cowork)${NC}"
-echo -e "   │   ├── hooks/           ${DIM}← ${HOOK_COUNT:-0} hooks${NC}"
-echo -e "   │   ├── settings.json    ${DIM}← hooks configuration${NC}"
+FW_DIR_NAME="$(basename "$VAULT_COMPONENTS_DIR")"
+DISPATCHER_NAME="$(basename "$DISPATCHER_DST")"
+echo -e "   ├── ${FW_DIR_NAME}/"
+echo -e "   │   ├── agents/          ${DIM}← agents${NC}"
+echo -e "   │   ├── skills/          ${DIM}← skills${NC}"
+echo -e "   │   ├── hooks/           ${DIM}← hooks${NC}"
+if [[ $HAS_PLUGINS -eq 1 ]]; then
+  echo -e "   │   ├── plugins/         ${DIM}← hook plugins${NC}"
+else
+  echo -e "   │   ├── settings.json    ${DIM}← hooks configuration${NC}"
+fi
 echo -e "   │   └── references/      ${DIM}← shared docs${NC}"
 echo -e "   ├── Meta/"
 echo -e "   │   └── scripts/         ${DIM}← ${ORCH_COUNT:-0} orchestra scripts${NC}"
-echo -e "   ├── CLAUDE.md            ${DIM}← project instructions${NC}"
-if [[ "$MCP_ANSWER" =~ ^[Yy]$ ]]; then
-echo -e "   └── .mcp.json            ${DIM}← Gmail + Calendar${NC}"
+if [[ -n "$MCP_SRC" && -f "$MCP_DST" ]]; then
+  echo -e "   ├── ${DISPATCHER_NAME}            ${DIM}← project instructions${NC}"
+  echo -e "   └── $(basename "$MCP_DST")        ${DIM}← MCP servers${NC}"
+else
+  echo -e "   └── ${DISPATCHER_NAME}            ${DIM}← project instructions${NC}"
+fi
+
+if [[ $DEP_COUNT -gt 0 ]]; then
+  echo ""
+  warn "$DEP_COUNT file(s) were deprecated (moved to ${FW_DIR_NAME}/deprecated/)"
 fi
 echo ""
 echo -e "   ${BOLD}Next steps:${NC}"
-echo -e "   1. Open Claude Code in your vault folder"
+case "$PLATFORM" in
+  claude-code) echo -e "   1. Open Claude Code in your vault folder" ;;
+  opencode)    echo -e "   1. Open OpenCode in your vault folder" ;;
+  gemini-cli)  echo -e "   1. Open Gemini CLI in your vault folder" ;;
+  *)           echo -e "   1. Open your agent platform in your vault folder" ;;
+esac
 echo -e "   2. Say: ${BOLD}\"Initialize my vault\"${NC}"
 echo -e "   3. The Architect will guide you through setup"
 echo ""

@@ -4,11 +4,11 @@
 
 ## I'm not an expert
 
-Let me be upfront: **I am not a Claude Code expert.** I'm a PhD researcher who needed help and built something that works for me. This project is an accumulation of personal needs, not a polished product from someone who knows all the best practices.
+Let me be upfront: **I am not an expert in agentic platforms.** I'm a PhD researcher who needed help and built something that works for me. This project is an accumulation of personal needs, not a polished product from someone who knows all the best practices.
 
-The code might not be optimal. The prompts might not be perfect. The architecture might make a seasoned Claude developer cringe. **And that's okay.** I'm sharing this because I believe it can help other people in my same situation, not because I think it's the definitive way to do things.
+The code might not be optimal. The prompts might not be perfect. The architecture might make a seasoned developer cringe. **And that's okay.** I'm sharing this because I believe it can help other people in my same situation, not because I think it's the definitive way to do things.
 
-If you know Claude Code better than I do (and chances are you do), **please contribute.** Every PR is welcome. Every suggestion, every critique, every improvement. I want this to get better, and I know it will get better faster with help from people who actually know what they're doing.
+If you know prompt engineering, agent platforms, or Obsidian better than I do (and chances are you do), **please contribute.** Every PR is welcome. Every suggestion, every critique, every improvement. I want this to get better, and I know it will get better faster with help from people who actually know what they're doing.
 
 ---
 
@@ -44,7 +44,7 @@ I wrote the instructions that the agents follow. The actual output is generated 
 
 - **LLMs hallucinate.** They can and do invent facts, fabricate citations, produce incorrect calculations, and generate plausible-sounding nonsense. If an agent tells you something that matters (a date, a number, a medical claim, a legal statement), **verify it independently.** Do not blindly trust AI-generated text.
 
-- **This project is designed and tested with Anthropic's Claude.** Claude has alignment training (RLHF, Constitutional AI) and safety filters that make it behave reasonably within the prompts I wrote. If you swap in a different model (through a fork, a configuration change, or any other means), all bets are off. Models without adequate safety training can produce harmful, offensive, dangerous, or completely unhinged output, and **that is entirely your problem, not mine.**
+- **This project is designed and primarily tested with Anthropic's Claude.** Claude has alignment training (RLHF, Constitutional AI) and safety filters that make it behave reasonably within the prompts I wrote. If you swap in a different model (through a fork, a configuration change, or any other means), all bets are off. Models without adequate safety training can produce harmful, offensive, dangerous, or completely unhinged output, and **that is entirely your problem, not mine.**
 
 - **Prompt-based safety is best-effort, not a guarantee.** I wrote the agent prompts to include safety boundaries (the Wellness Guide reminds you to seek professional help, the Food Coach tells you to consult a dietitian). But these are instructions to the model, not hard constraints. A model can ignore them. A different model might not follow them at all.
 

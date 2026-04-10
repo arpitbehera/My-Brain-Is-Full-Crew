@@ -8,7 +8,7 @@ A step-by-step guide for setting up your AI-powered vault. No technical backgrou
 
 ### Required
 - **Obsidian**: A free note-taking app. Download it at [obsidian.md](https://obsidian.md)
-- **Claude Code**: Anthropic's coding assistant. You need a Claude Pro, Max, or Team subscription.
+- **An agent platform**: one of [Claude Code](https://claude.ai/code) (Pro/Max/Team), [Gemini CLI](https://github.com/google-gemini/gemini-cli), or [OpenCode](https://opencode.ai).
 - **An Obsidian vault**: This is just a folder on your computer where Obsidian stores your notes. If you don't have one yet, Obsidian will create one for you when you first open it.
 - **Git**: A tool to download the project. On Mac, the terminal will prompt you to install it automatically the first time you use it. On Windows, download it from [git-scm.com](https://git-scm.com).
 
@@ -57,11 +57,17 @@ Don't worry if this feels like a lot. The Architect agent will remind you about 
 
 ---
 
-## Step 2: Install Claude Code
+## Step 2: Install an agent platform
 
-1. Go to [claude.ai/code](https://claude.ai/code) and follow the instructions to install Claude Code
-2. You need a **Claude Pro**, **Max**, or **Team** subscription
-3. You can use either the **Desktop app** (Cowork) or the **CLI** (command-line interface). The Crew works on both
+Install one of the following:
+
+| Platform | Install | Subscription |
+|----------|---------|-------------|
+| **Claude Code** | [claude.ai/code](https://claude.ai/code) | Claude Pro, Max, or Team |
+| **Gemini CLI** | [github.com/google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli) | Google account |
+| **OpenCode** | [opencode.ai](https://opencode.ai) | Varies by provider |
+
+Claude Code works as both CLI and Desktop app (Cowork). The Crew works on all supported platforms.
 
 ---
 
@@ -88,20 +94,20 @@ cd My-Brain-Is-Full-Crew
 bash scripts/launchme.sh
 ```
 
-The script will ask two quick questions:
-1. **Is this your vault folder?** Confirm or enter the correct path
-2. **Do you use Gmail, Hey.com, or Google Calendar?** Choose yes to set up the Postman integration
+The script will ask a couple of questions:
+1. **Which platform?** Select your agent platform (Claude Code, Gemini CLI, or OpenCode)
+2. **Is this your vault folder?** Confirm or enter the correct path
 
-When it's done, your vault will look like this:
+When it's done, your vault will look like this (paths vary by platform):
 
 ```
 your-vault/
-├── .claude/
+├── .<platform>/         ← .claude/, .gemini/, .opencode/, or any platform dir that will be supported in the future
 │   ├── agents/          ← 8 lightweight crew agents
-│   ├── skills/          ← 13 specialized skills for complex flows
+│   ├── skills/          ← 14 specialized skills for complex flows
+│   ├── hooks/           ← file protection and validation
 │   └── references/      ← shared docs the agents read
-├── CLAUDE.md            ← project instructions
-├── .mcp.json            ← Gmail + Calendar (only if you said yes)
+├── CLAUDE.md / GEMINI.md / AGENTS.md / ...  ← dispatcher (varies by platform)
 ├── My-Brain-Is-Full-Crew/  ← the repo (for future updates)
 └── ... your Obsidian notes
 ```
@@ -112,13 +118,13 @@ your-vault/
 
 ## Step 4: Connect your vault
 
-1. Open Claude Code (CLI or Desktop)
-2. Open it **inside your Obsidian vault folder**. This is important: Claude needs to be in your vault to read and write your notes.
+1. Open your agent platform (Claude Code, Gemini CLI, or OpenCode)
+2. Open it **inside your Obsidian vault folder**. This is important: the platform needs to be in your vault to read and write your notes.
 
-If you're using the CLI:
+If you're using a CLI tool:
 ```bash
 cd /path/to/your-vault
-claude
+claude          # or: gemini, opencode
 ```
 
 If you're using Claude Code Desktop (Cowork), open the vault folder as your working directory.
@@ -160,7 +166,7 @@ You don't need to manage these files — agents handle them automatically. Each 
 
 ## Step 6: Start using it
 
-From now on, you just talk to Claude. Here are some things to try on your first day:
+From now on, you just talk to your agent. Here are some things to try on your first day:
 
 ### Capture some thoughts
 > "Save this: I had an idea about reorganizing the team standup. Maybe we should do async updates on Mondays and only meet on Wednesdays"
@@ -211,7 +217,7 @@ The Crew works best with simple daily routines:
 ## Troubleshooting
 
 ### "The agent doesn't seem to activate"
-Make sure Claude Code is open inside your vault folder (not a different directory). Verify agent files exist at `.claude/agents/` and skill files at `.claude/skills/` in your vault. Try saying the trigger phrase differently. Agents and skills understand natural language in multiple languages.
+Make sure your agent platform is open inside your vault folder (not a different directory). Verify agent files exist in the platform's agents directory (e.g., `.claude/agents/`). Try saying the trigger phrase differently. Agents and skills understand natural language in multiple languages.
 
 ### "Email/Calendar isn't working"
 The Postman needs at least one email backend: GWS CLI (`gws`), Hey CLI (`hey`), or MCP connectors. For GWS, see `docs/gws-setup-guide.md`. For Hey, install from [github.com/basecamp/hey-cli](https://github.com/basecamp/hey-cli) and run `hey auth login`. For MCP, run the installer again (`bash scripts/launchme.sh`) and answer **yes** to the Gmail/Calendar question, or manually copy `.mcp.json` from the repo to your vault root.
@@ -249,4 +255,4 @@ Open an issue on GitHub with:
 
 ---
 
-*Remember: the best organizational system is the one you actually use. Start small. Talk to Claude. Let the Crew handle the rest.*
+*Remember: the best organizational system is the one you actually use. Start small. Talk to your agent. Let the Crew handle the rest.*

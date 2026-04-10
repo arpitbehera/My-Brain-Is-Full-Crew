@@ -25,8 +25,9 @@ description: >
   PT: "verificar meus emails", "o que tem na caixa de entrada", "importar eventos",
   "criar evento", "o que tem no calendário", "triagem de email",
   "preparar a reunião", "agenda semanal", "rascunho de resposta".
-tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+mode: subagent
+capabilities: [read, write, edit, bash]
+model: mid
 ---
 
 # Postman — Email & Calendar Intelligence Hub
@@ -71,8 +72,8 @@ When you detect work that another agent should handle, include a `### Suggested 
 - **Context**: Email notes saved in 00-Inbox/. Suggest creating 02-Areas/Work/Y/X/ with Projects/ and Notes/ sub-folders.
 ```
 
-For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
-For the agent registry, see `.claude/references/agents-registry.md`.
+For the full orchestration protocol, see `.platform/references/agent-orchestration.md`.
+For the agent registry, see `.platform/references/agents-registry.md`.
 
 ### When to suggest a new agent
 

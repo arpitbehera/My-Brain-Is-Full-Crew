@@ -13,16 +13,17 @@ Found that an agent behaves weirdly, gives poor results, or misses edge cases?
 1. Open an issue describing the problem with a concrete example
 2. Or submit a PR with the improvement
 
-Agent files live in `agents/<agent-name>.md`. The plugin manifest is at `.claude-plugin/plugin.json`. All agents are written in English, and they automatically respond in the user's language.
+Agent source files live in `agents/<agent-name>.md`. They use a platform-neutral format with `capabilities:` (not tool names) and `model`: `low`/`mid`/`high` (not platform-specific model names). The build system translates these into each platform's native format. All agents are written in English, and they automatically respond in the user's language.
 
-To test your changes locally:
+To test your changes locally, build and install into a test vault:
 ```bash
-claude --plugin-dir ./
+bash scripts/build.sh --platform claude-code   # or gemini-cli, opencode, etc.
+bash scripts/launchme.sh --platform claude-code --target /tmp/test-vault
 ```
 
 ### Propose a new core crew member
 
-> **Note**: Users can create custom agents directly within their vault by saying "create a new agent" in Claude Code. The Architect handles the entire process. The section below is for proposing new *core* agents that ship with the project.
+> **Note**: Users can create custom agents directly within their vault by saying "create a new agent". The Architect handles the entire process. The section below is for proposing new *core* agents that ship with the project.
 
 Have an idea for a new core agent? Open an issue with:
 
@@ -50,7 +51,7 @@ Open an issue with:
 
 ## Agent file structure
 
-Each agent is a Claude Code **subagent**, a standalone `.md` file with YAML frontmatter:
+Each agent is a standalone `.md` file with YAML frontmatter in the **source format** (platform-neutral):
 
 ```yaml
 ---
@@ -59,8 +60,8 @@ description: >
   One paragraph description used for auto-triggering.
   Include trigger phrases in multiple languages (English, Italian, French,
   Spanish, German, Portuguese) for maximum discoverability.
-tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+capabilities: [read, write, edit]
+model: mid
 ---
 
 # <Display Name> — <Subtitle>
@@ -68,15 +69,17 @@ model: sonnet
 [Agent instructions in English]
 ```
 
-### Frontmatter fields
+The build system translates `capabilities` into platform-specific tool lists or permission blocks, and `model` into platform-specific model names (e.g., `mid` → `sonnet` for Claude Code, `gemini-2.5-flash` for Gemini CLI).
+
+### Frontmatter fields (source format)
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | Yes | Lowercase, hyphens only (e.g., `my-agent`) |
-| `description` | Yes | When Claude should auto-invoke this agent. Include multilingual triggers |
-| `tools` | Yes | Comma-separated list of allowed tools |
-| `disallowedTools` | No | Tools to explicitly deny (e.g., `Write, Edit` for read-only agents) |
-| `model` | No | `sonnet`, `opus`, or `haiku` (default: inherits from parent) |
+| `description` | Yes | When the platform should auto-invoke this agent. Include multilingual triggers |
+| `capabilities` | Yes | List from: `read`, `write`, `edit`, `bash`, `webfetch`, `websearch`, `task`, `todo` |
+| `model` | No | `low`, `mid`, or `high` (default: inherits from parent) |
+| `exclude` | No | List of platforms to exclude this agent from (e.g., `[opencode]`) |
 
 ### Key rules for agent files
 
@@ -97,7 +100,7 @@ Agents coordinate through a dispatcher-driven orchestration system. When an agen
 
 ## Custom agents vs. core agents
 
-**Custom agents** are created by users within their own vault using the Architect agent. They live in the user's `.claude/agents/` directory and are personal to that vault. Custom agents:
+**Custom agents** are created by users within their own vault using the Architect agent. They live in the user's platform agents directory (e.g., `.claude/agents/`) and are personal to that vault. Custom agents:
 - Are created through a conversational flow with the Architect
 - Follow the same file structure and conventions as core agents
 - Participate in the dispatcher's routing and orchestration system
@@ -122,6 +125,122 @@ If your custom agent solves a problem that many users would benefit from, consid
 | `librarian.md` | Librarian | Vault Maintenance | Read, Write, Edit, Bash, Glob, Grep |
 | `transcriber.md` | Transcriber | Audio & Transcription | Read, Write, Glob, Grep |
 | `postman.md` | Postman | Email & Calendar | Read, Write, Edit, Glob, Grep |
+
+---
+
+## Hooks
+
+Three hooks ship with the crew, protecting vault integrity across all platforms:
+
+| Hook | Event | What it does |
+|------|-------|-------------|
+| `protect-system-files` | `before-tool-use` | Blocks edits to core agents, skills, references, and the dispatcher file. Custom agents are allowed through. |
+| `validate-frontmatter` | `after-tool-use` | Warns if a written `.md` file has broken YAML frontmatter (missing delimiters, tabs, unquoted colons). |
+| `notify` | `on-notification` | Sends a desktop notification (macOS/Linux) when the platform needs attention during long agent chains. |
+
+Hook source files live in `hooks/`. Each hook has a `.hook.yaml` (metadata: name, script, triggers, match-tool filters) and a `.sh` (implementation). Hooks are **platform-agnostic** — they read `platform_dir` and `dispatcher_name` from the neutral JSON input to determine which paths to protect. The adapter layer handles translating platform-native events into the neutral schema before calling the hooks.
+
+If you add a new hook:
+1. Create `hooks/<name>.hook.yaml` with `name`, `script`, `triggers` (using the neutral event vocabulary: `before-tool-use`, `after-tool-use`, `on-notification`, `on-session-start`, `on-prompt-submit`)
+2. Create `hooks/<name>.sh` reading neutral JSON from stdin
+3. Use `$PLATFORM_DIR` and `$DISPATCHER_NAME` (extracted from JSON input) instead of hardcoded paths
+
+---
+
+## Adding a new platform adapter
+
+The build system uses a **source-of-truth + per-platform adapters** architecture. Source files (`agents/`, `skills/`, `references/`, `hooks/`, `DISPATCHER.md`) are platform-neutral. Each adapter translates them into a platform's native format.
+
+### Adapter contract
+
+Every adapter is a single file at `adapters/<platform-name>/adapter.sh` that implements these functions:
+
+| Function | Responsibility |
+|----------|---------------|
+| `adapter_translate_dispatcher(src, dst)` | Copy `DISPATCHER.md` to the platform's dispatcher filename |
+| `adapter_translate_references(src, dst)` | Copy reference `.md` files to the platform's references directory |
+| `adapter_translate_skills(src, dst)` | Copy skill `SKILL.md` files to the platform's skills directory |
+| `adapter_translate_agents(src, dst)` | Translate agent frontmatter (capabilities → tools/permissions, model → native name) and write to agents directory |
+| `adapter_translate_hooks(src, dst)` | Copy hook scripts and generate platform-native hook configuration (settings.json, JS plugin, etc.) |
+| `adapter_translate_mcp(src, dst)` | Read `mcp/servers.yaml` and write platform-native MCP config |
+| `adapter_finalize(src, dst)` | Any final assembly (e.g., merging multiple config files into one) |
+
+The entry point is `adapter_build(src, dst)` which calls all seven functions in order.
+
+### How to add a new platform
+
+1. **Create the adapter directory**: `mkdir -p adapters/<name>/templates/`
+
+2. **Create `adapters/<name>/adapter.sh`** with:
+   - Platform constants (e.g., `MY_PLATFORM="my-platform"`, `MY_FW_DIR="myplatform"`, `MY_DISPATCHER="MY_DISPATCH.md"`)
+   - Vocabulary mapping functions (capabilities → native tools, events → native events, model tiers → native model names)
+   - All 7 `adapter_translate_*` functions + `adapter_build`
+   - Call `rewrite_platform_paths "$file" "$MY_FW_DIR" "$MY_DISPATCHER"` on every output text file
+
+3. **Add the platform to install scripts**: add a case to the `case "$PLATFORM"` block in `scripts/launchme.sh` and `scripts/updateme.sh`, setting `DIST_COMPONENTS_DIR`, `VAULT_COMPONENTS_DIR`, `DISPATCHER_SRC`, `DISPATCHER_DST`, `MCP_SRC`, `MCP_DST`, and `HAS_PLUGINS`.
+
+4. **Write tests**: create `tests/adapters/<name>/adapter.test.sh` with tests for each translation function.
+
+5. **Verify**: `bash scripts/build.sh --platform <name>` should produce a complete `dist/<name>/` tree. Check that no `.platform/` or `DISPATCHER.md` placeholders leak into the output.
+
+The shared library `adapters/lib.sh` provides parsing helpers (`parse_frontmatter`, `parse_capabilities`, `should_include`, `parse_hook_yaml`, `agent_body`, `enumerate_agents`, `enumerate_hooks`) and the `rewrite_platform_paths` function. Your adapter sources this automatically via `scripts/build.sh`.
+
+Look at `adapters/claude-code/adapter.sh` or `adapters/gemini-cli/adapter.sh` as reference implementations.
+
+---
+
+## Testing
+
+The project has two levels of tests:
+
+### Unit tests
+
+Per-adapter unit tests live in `tests/adapters/`:
+
+```
+tests/adapters/
+├── lib.test.sh                    Shared library tests (18 tests)
+├── claude-code/adapter.test.sh    CC adapter tests (10 tests)
+├── opencode/adapter.test.sh       OC adapter tests (17 tests)
+├── opencode/config-merge.test.sh  OC config merge tests (6 tests)
+└── gemini-cli/adapter.test.sh     Gemini adapter tests (13 tests)
+```
+
+Run them in isolation (each adapter must be tested in its own shell since they share function names):
+
+```bash
+# All lib tests
+bash -c 'source adapters/lib.sh; source tests/adapters/lib.test.sh; P=0; F=0; for fn in $(declare -F | awk "{print \$3}" | grep "^test_"); do $fn >/dev/null 2>&1 && P=$((P+1)) || { echo "FAIL: $fn"; F=$((F+1)); }; done; echo "$P pass, $F fail"'
+
+# CC adapter tests
+bash -c 'source adapters/lib.sh; source adapters/claude-code/adapter.sh; source tests/adapters/claude-code/adapter.test.sh; P=0; F=0; for fn in $(declare -F | awk "{print \$3}" | grep "^test_"); do $fn >/dev/null 2>&1 && P=$((P+1)) || { echo "FAIL: $fn"; F=$((F+1)); }; done; echo "$P pass, $F fail"'
+
+# Same pattern for opencode (grep "^test_oc_") and gemini-cli (grep "^test_gemini_")
+```
+
+### Regression test
+
+`tests/regression/run.sh` builds the Claude Code adapter and compares the output byte-for-byte against a pre-captured snapshot. This catches accidental changes to the CC build output.
+
+```bash
+bash tests/regression/run.sh
+```
+
+If you change source files or the CC adapter, you may need to update the snapshot:
+
+```bash
+bash scripts/build.sh --platform claude-code
+cp -r dist/claude-code/.claude/* tests/regression/snapshot/.claude/
+cp dist/claude-code/CLAUDE.md tests/regression/snapshot/CLAUDE.md
+bash tests/regression/run.sh   # should now pass
+```
+
+### When to run tests
+
+- After modifying any adapter: run that adapter's tests
+- After modifying `adapters/lib.sh`: run all adapter tests
+- After modifying source files (agents, skills, references, hooks, DISPATCHER.md): run the regression test
+- Before submitting a PR: run everything
 
 ---
 

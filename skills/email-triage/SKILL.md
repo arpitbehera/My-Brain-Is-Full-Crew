@@ -452,5 +452,5 @@ If you detect that the user needs functionality that NO existing agent provides,
 - **Suggested role**: {brief description of what the new agent would do}
 ```
 
-For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
-For the agent registry, see `.claude/references/agents-registry.md`.
+For the full orchestration protocol, see `.platform/references/agent-orchestration.md`.
+For the agent registry, see `.platform/references/agents-registry.md`.

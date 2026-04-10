@@ -64,7 +64,7 @@ The crew ships with 8 agents. But your life isn't generic, and your system shoul
 | *"I keep starting side projects and abandoning them"* | **project-pulse**: weekly check-in on all active projects, flags stale ones |
 | *"I have three freelance clients and I mix up their deadlines"* | **client-tracker**: aggregates deadlines per client from notes and calendar |
 
-Custom agents coordinate with the core crew, get discovered automatically by Claude Code, and respond in your language. They just solve the problems that are specific to **your** life.
+Custom agents coordinate with the core crew, get discovered automatically by your agent platform, and respond in your language. They just solve the problems that are specific to **your** life.
 
 > **Your custom agents, your responsibility.** Custom agents are created by you and run on your data. The project provides no warranty on their behavior. See [Terms of Use](TERMS_OF_USE.md).
 
@@ -140,7 +140,7 @@ The dispatcher automatically routes your message to the right skill or agent. Yo
 ## How it works
 
 ```
-You talk to Claude  →  Dispatcher checks skills first  →  If match: invokes skill
+You talk naturally  →  Dispatcher checks skills first  →  If match: invokes skill
                                                          →  If no match: invokes agent  →  Your vault gets updated
 ```
 
@@ -153,12 +153,12 @@ Each crew member is an isolated AI with its own system prompt, tool restrictions
 ```mermaid
 graph TB
     User((You))
-    Claude["Claude Code\nDispatcher"]
+    Dispatcher["Dispatcher"]
 
-    User -->|"talk naturally"| Claude
-    Claude -->|"skill match?\ninvoke skill"| Skills
-    Claude -->|"no skill match?\ninvoke agent"| Agents
-    Claude -->|"chains agents when needed"| Agents
+    User -->|"talk naturally"| Dispatcher
+    Dispatcher -->|"skill match?\ninvoke skill"| Skills
+    Dispatcher -->|"no skill match?\ninvoke agent"| Agents
+    Dispatcher -->|"chains agents when needed"| Agents
 
     subgraph Skills["Specialized Skills (14)"]
         direction TB
@@ -202,7 +202,7 @@ graph TB
     end
 
     style User fill:#7c3aed,stroke:#5b21b6,color:#fff
-    style Claude fill:#3b82f6,stroke:#2563eb,color:#fff
+    style Dispatcher fill:#3b82f6,stroke:#2563eb,color:#fff
     style Skills fill:#fef3c7,stroke:#f59e0b
     style Core fill:#e0e7ff,stroke:#818cf8
     style External fill:#dbeafe,stroke:#60a5fa
@@ -234,16 +234,17 @@ sequenceDiagram
     S->>S: files notes to correct locations
 ```
 
-### Works on both Claude Code CLI and Claude Code Desktop (Cowork)
+### Multi-platform support
 
-The installer sets up **two parallel layers** so the Crew works everywhere:
+The Crew works on multiple agent platforms. The installer builds from a single source and deploys to your platform of choice:
 
-| Layer | Location | Purpose |
-|-------|----------|---------|
-| **Agents** | `.claude/agents/` | Lightweight reactive agents for single-shot tasks (capture, search, create) |
-| **Skills** | `.claude/skills/` | Specialized multi-step flows for complex tasks (onboarding, triage, audits) |
+| Platform | Install command | Config dir | Dispatcher |
+|----------|----------------|------------|------------|
+| **Claude Code** (CLI & Desktop) | `bash scripts/launchme.sh --platform claude-code` | `.claude/` | `CLAUDE.md` |
+| **Gemini CLI** | `bash scripts/launchme.sh --platform gemini-cli` | `.gemini/` | `GEMINI.md` |
+| **OpenCode** | `bash scripts/launchme.sh --platform opencode` | `.opencode/` | `AGENTS.md` |
 
-Both layers work on CLI and Desktop. `launchme.sh` installs both automatically. The dispatcher decides whether to invoke a skill or an agent based on your message.
+If you omit `--platform`, the installer asks you to choose. Each platform gets agents, skills, references, hooks, and MCP servers translated to its native format. `launchme.sh` installs everything automatically.
 
 Your vault follows a hybrid **PARA + Zettelkasten** structure:
 
@@ -265,7 +266,7 @@ Meta/              Vault config, agent logs, health reports
 
 ## Quick start
 
-> **Prerequisite**: You need [Claude Code](https://claude.ai/code) with a Claude Pro, Max, or Team subscription, and [Obsidian](https://obsidian.md) (free).
+> **Prerequisites**: [Obsidian](https://obsidian.md) (free) and one of the supported agentic platforms.
 
 ### 1. Create your Obsidian vault
 
@@ -285,13 +286,13 @@ cd My-Brain-Is-Full-Crew
 bash scripts/launchme.sh
 ```
 
-The script asks a couple of questions and copies the agents and skills into your vault's `.claude/` directory. That's it. When Claude Code is open in your vault folder, the agents activate automatically. When you're in any other project, they don't.
+The script asks you to pick a platform, then builds and installs the agents and skills into your vault. When your agent platform is open in your vault folder, the agents activate automatically. When you're in any other project, they don't.
 
 > **Never used a terminal before?** See the [step-by-step guide for beginners](docs/getting-started.md). It walks you through everything, or just show this page to a tech-savvy friend. It takes 60 seconds.
 
 ### 4. Initialize
 
-Open Claude Code **inside your vault folder** and say:
+Open your agent platform **inside your vault folder** and say:
 
 > **"Initialize my vault"**
 
@@ -333,7 +334,7 @@ No translations to install. No language packs. It just works.
 
 ## Works from your phone too
 
-You can control the Crew from your phone using Claude Code's **Remote Control** feature. Your computer runs Claude Code locally (with full vault and agent access), and your phone acts as a remote interface through the browser or the Claude mobile app.
+If you use Claude Code, you can control the Crew from your phone using its **Remote Control** feature. Your computer runs Claude Code locally (with full vault and agent access), and your phone acts as a remote interface through the browser or the Claude mobile app.
 
 Capture a quick thought on a walk. Check your email from the couch. Search your vault from the supermarket. Everything runs on your computer; your phone is just the remote.
 
@@ -359,7 +360,7 @@ No agent works in isolation. The crew is greater than the sum of its parts.
 The **Postman** agent (and its related skills: `/email-triage`, `/meeting-prep`, `/weekly-agenda`, `/deadline-radar`) requires one of:
 - **Google Workspace CLI** (`gws`) — full read/write access to Gmail and Google Calendar: search, read, archive, delete, label, send emails; create/update/delete calendar events. See [`docs/gws-setup-guide.md`](docs/gws-setup-guide.md) for setup.
 - **Hey CLI** (`hey`) — for Hey.com accounts. Read/reply/compose emails, leverages Hey's pre-sorted mailboxes (Imbox, Feed, Paper Trail, Reply Later, Set Aside, Bubble Up). Calendar operations still use `gws`. See [Hey CLI](https://github.com/basecamp/hey-cli) for installation.
-- **MCP connectors** (read-only fallback) — `launchme.sh` offers to set up `.mcp.json` automatically. Limited to reading emails and calendar events, plus draft creation.
+- **MCP connectors** (read-only fallback) — `launchme.sh` sets up MCP servers automatically (format varies by platform). Limited to reading emails and calendar events, plus draft creation.
 
 You can use `gws` and `hey` simultaneously if you have both Gmail and Hey.com accounts.
 
@@ -394,6 +395,12 @@ After pulling new changes from the repo:
 cd /path/to/your-vault/My-Brain-Is-Full-Crew
 git pull
 bash scripts/updateme.sh
+```
+
+The updater **automatically detects** which platform is installed in your vault (by checking for a platform-specific folder). If you have multiple platforms installed, it asks you to choose which one to update. You can also specify explicitly with `--platform`:
+
+```bash
+bash scripts/updateme.sh --platform opencode
 ```
 
 Only changed files are updated. Your vault notes are never touched.
@@ -449,26 +456,30 @@ My-Brain-Is-Full-Crew/               ← cloned inside your vault
 │   ├── getting-started.md             Step-by-step setup guide
 │   ├── examples.md                    Real-world usage examples
 │   └── agents/                        Deep-dive into each agent
-├── .mcp.json                        MCP servers — read-only fallback (see docs/gws-setup-guide.md for full access)
-├── .claude-plugin/plugin.json       Plugin manifest (for --plugin-dir)
+├── adapters/                        Platform adapters (build system)
+│   ├── lib.sh                         Shared parsing and rewrite helpers
+│   ├── claude-code/                   Claude Code adapter
+│   ├── gemini-cli/                    Gemini CLI adapter
+│   └── opencode/                      OpenCode adapter
+├── mcp/servers.yaml                 MCP server definitions (source of truth)
 ├── LICENSE
 ├── README.md                        You are here
 └── CONTRIBUTING.md
 ```
 
-After running `launchme.sh`, your vault looks like:
+After running `launchme.sh`, your vault looks like (paths vary by platform):
 
 ```
 your-vault/
-├── .claude/
-│   ├── agents/          ← lightweight reactive agents
-│   ├── skills/          ← specialized multi-step skills
-│   └── references/      ← shared docs
+├── .<platform>/              ← .claude/, .gemini/, .opencode/, etc.
+│   ├── agents/               ← lightweight reactive agents
+│   ├── skills/               ← specialized multi-step skills
+│   ├── hooks/                ← file protection and validation hooks
+│   └── references/           ← shared docs
 ├── Meta/
-│   └── scripts/         ← orchestra scripts (permission-free agent commands)
-├── CLAUDE.md            ← project instructions (dispatcher routing)
-├── .mcp.json            ← Gmail + Calendar read-only fallback (if enabled)
-├── My-Brain-Is-Full-Crew/  ← the repo (for updates)
+│   └── scripts/              ← orchestra scripts (permission-free agent commands)
+├── CLAUDE.md / GEMINI.md / AGENTS.md / ...  ← dispatcher (platform-specific name)
+├── My-Brain-Is-Full-Crew/    ← the repo (for updates)
 └── ... your Obsidian notes
 ```
 
@@ -476,7 +487,7 @@ your-vault/
 
 ## Contributing (seriously, please help)
 
-This started as one person's survival tool. I'm sharing it because I think it can help others, but **I know it can be much better**, and I need help from people who know Claude Code, prompt engineering, and Obsidian better than I do.
+This started as one person's survival tool. I'm sharing it because I think it can help others, but **I know it can be much better**, and I need help from people who know prompt engineering, agentic platforms, and Obsidian better than I do.
 
 **Every single PR is welcome.** I mean it. If you see something that could be improved (a better prompt structure, a smarter agent behavior, a more elegant architecture) please submit it. I won't be precious about my code. The goal is to help people, not to protect my ego.
 
@@ -489,6 +500,10 @@ If you want to:
 - **Just tell me what I'm doing wrong**: I'll listen
 
 ...PRs, issues, and honest feedback are all welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### TO DO
+- [ ] Update the installer to auto-install the orchestra scripts (currently a manual copy-paste step)
+- [ ] Completely decouple the installer from the platform (currently has some platform-specific logic that could be moved to the adapters or to some kind of config file)
 
 ---
 

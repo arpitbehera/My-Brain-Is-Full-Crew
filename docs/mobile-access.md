@@ -1,5 +1,7 @@
 # Using the Crew from Your Phone
 
+> **Platform note:** This guide is specific to **Claude Code**. Remote Control is a Claude Code feature and is not available on Gemini CLI or OpenCode.
+
 > A guide to controlling your vault from your phone using Claude Code's Remote Control feature.
 
 ---
