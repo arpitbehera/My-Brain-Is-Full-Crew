@@ -261,7 +261,7 @@ adapter_translate_agents() {
 }
 
 # adapter_translate_skills <source_skills_dir> <dest_root>
-# Copies each skill directory's SKILL.md into dest_root/.claude/skills/<name>/.
+# Copies each skill bundle into dest_root/.claude/skills/<name>/.
 adapter_translate_skills() {
   local src="$1" dst="$2"
   [[ -d "$src" ]] || return 0
@@ -270,9 +270,8 @@ adapter_translate_skills() {
     should_include "${skill_dir}SKILL.md" "$CC_PLATFORM" || continue
     local name; name="$(basename "$skill_dir")"
     local out="$dst/.claude/skills/$name"
-    mkdir -p "$out"
-    cp "${skill_dir}SKILL.md" "$out/SKILL.md"
-    rewrite_platform_paths "$out/SKILL.md" "$CC_FW_DIR" "$CC_DISPATCHER"
+    copy_skill_bundle "$skill_dir" "$out" || return 1
+    rewrite_skill_bundle_platform_paths "$out" "$CC_FW_DIR" "$CC_DISPATCHER" || return 1
   done
 }
 

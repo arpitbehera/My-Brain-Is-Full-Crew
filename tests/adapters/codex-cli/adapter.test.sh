@@ -136,13 +136,30 @@ EOF
 test_cc_translate_skills_copies_to_agents_skills_dir() {
   local src; src="$(mktemp -d)"
   local dst; dst="$(mktemp -d)"
-  mkdir -p "$src/skills/foo" "$src/skills/bar"
+  mkdir -p "$src/skills/foo/references" \
+           "$src/skills/foo/assets" \
+           "$src/skills/foo/scripts" \
+           "$src/skills/foo/agents" \
+           "$src/skills/bar"
   cat > "$src/skills/foo/SKILL.md" <<'SKILLEOF'
 ---
 name: foo
 description: Foo skill
 ---
-body
+See .platform/skills/foo/ and DISPATCHER.md.
+SKILLEOF
+  cat > "$src/skills/foo/references/guide.md" <<'SKILLEOF'
+See .platform/references/guide.md and DISPATCHER.md.
+SKILLEOF
+  cat > "$src/skills/foo/assets/template.md" <<'SKILLEOF'
+Use .platform/agents/example.md with DISPATCHER.md.
+SKILLEOF
+  cat > "$src/skills/foo/scripts/run.sh" <<'SKILLEOF'
+#!/usr/bin/env bash
+echo .platform/skills/foo/ DISPATCHER.md
+SKILLEOF
+  cat > "$src/skills/foo/agents/openai.yaml" <<'SKILLEOF'
+instructions: "Read .platform/references/guide.md and DISPATCHER.md"
 SKILLEOF
   cat > "$src/skills/bar/SKILL.md" <<'SKILLEOF'
 ---
@@ -155,8 +172,57 @@ SKILLEOF
   local result=0
   [[ -f "$dst/.agents/skills/foo/SKILL.md" ]] || { echo "foo missing"; result=1; }
   [[ -f "$dst/.agents/skills/bar/SKILL.md" ]] || { echo "bar missing"; result=1; }
+  [[ -f "$dst/.agents/skills/foo/references/guide.md" ]] || { echo 'reference missing'; result=1; }
+  [[ -f "$dst/.agents/skills/foo/assets/template.md" ]] || { echo 'asset missing'; result=1; }
+  [[ -f "$dst/.agents/skills/foo/scripts/run.sh" ]] || { echo 'script missing'; result=1; }
+  [[ -f "$dst/.agents/skills/foo/agents/openai.yaml" ]] || { echo 'openai.yaml missing'; result=1; }
+  local script_content; script_content="$(cat "$dst/.agents/skills/foo/scripts/run.sh")"
+  [[ "$script_content" == *'.agents/skills/foo/'* ]] || { echo "script should use native Codex skill path: $script_content"; result=1; }
+  [[ "$script_content" == *'AGENTS.md'* ]] || { echo "script should use Codex dispatcher: $script_content"; result=1; }
+  grep -RIl '.platform/\|DISPATCHER.md' "$dst/.agents/skills/foo" | grep -q . \
+    && { echo 'neutral path leaked from Codex bundle'; result=1; }
   rm -rf "$src" "$dst"
   return $result
+}
+
+test_cc_translate_skills_propagates_copy_bundle_failure() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)"
+  mkdir -p "$src/skills/a" "$src/skills/b"
+  touch "$src/skills/a/SKILL.md" "$src/skills/b/SKILL.md"
+
+  local original_copy; original_copy="$(declare -f copy_skill_bundle)"
+  local original_rewrite; original_rewrite="$(declare -f _cc_rewrite_skill_text_tree)"
+  copy_skill_bundle() { [[ "$(basename "$1")" != "a" ]]; }
+  _cc_rewrite_skill_text_tree() { return 0; }
+
+  local adapter_status=0
+  adapter_translate_skills "$src/skills" "$dst" || adapter_status=$?
+
+  eval "$original_copy"
+  eval "$original_rewrite"
+  rm -rf "$src" "$dst"
+  [[ $adapter_status -ne 0 ]] || { echo 'Codex adapter masked copy_skill_bundle failure'; return 1; }
+}
+
+test_cc_translate_skills_propagates_bundle_rewrite_failure() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)"
+  mkdir -p "$src/skills/a" "$src/skills/b"
+  touch "$src/skills/a/SKILL.md" "$src/skills/b/SKILL.md"
+
+  local original_copy; original_copy="$(declare -f copy_skill_bundle)"
+  local original_rewrite; original_rewrite="$(declare -f _cc_rewrite_skill_text_tree)"
+  copy_skill_bundle() { return 0; }
+  _cc_rewrite_skill_text_tree() { [[ "$1" != "a" ]]; }
+
+  local adapter_status=0
+  adapter_translate_skills "$src/skills" "$dst" || adapter_status=$?
+
+  eval "$original_copy"
+  eval "$original_rewrite"
+  rm -rf "$src" "$dst"
+  [[ $adapter_status -ne 0 ]] || { echo 'Codex adapter masked bundle rewrite failure'; return 1; }
 }
 
 test_cc_translate_skills_rewrites_paths() {

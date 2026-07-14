@@ -35,13 +35,30 @@ test_gemini_translate_references_copies_md_files() {
 test_gemini_translate_skills_copies_skill_md() {
   local src; src="$(mktemp -d)"
   local dst; dst="$(mktemp -d)"
-  mkdir -p "$src/skills/foo" "$src/skills/bar"
+  mkdir -p "$src/skills/foo/references" \
+           "$src/skills/foo/assets" \
+           "$src/skills/foo/scripts" \
+           "$src/skills/foo/agents" \
+           "$src/skills/bar"
   cat > "$src/skills/foo/SKILL.md" <<'HEREDOC'
 ---
 name: foo
 description: Foo skill
 ---
-body
+See .platform/skills/foo/ and DISPATCHER.md.
+HEREDOC
+  cat > "$src/skills/foo/references/guide.md" <<'HEREDOC'
+See .platform/references/guide.md and DISPATCHER.md.
+HEREDOC
+  cat > "$src/skills/foo/assets/template.md" <<'HEREDOC'
+Use .platform/agents/example.md with DISPATCHER.md.
+HEREDOC
+  cat > "$src/skills/foo/scripts/run.sh" <<'HEREDOC'
+#!/usr/bin/env bash
+echo .platform/skills/foo/ DISPATCHER.md
+HEREDOC
+  cat > "$src/skills/foo/agents/openai.yaml" <<'HEREDOC'
+instructions: "Read .platform/references/guide.md and DISPATCHER.md"
 HEREDOC
   cat > "$src/skills/bar/SKILL.md" <<'HEREDOC'
 ---
@@ -54,8 +71,54 @@ HEREDOC
   local result=0
   [[ -f "$dst/.gemini/skills/foo/SKILL.md" ]] || { echo "foo missing"; result=1; }
   [[ -f "$dst/.gemini/skills/bar/SKILL.md" ]] || { echo "bar missing"; result=1; }
+  [[ -f "$dst/.gemini/skills/foo/references/guide.md" ]] || { echo 'reference missing'; result=1; }
+  [[ -f "$dst/.gemini/skills/foo/assets/template.md" ]] || { echo 'asset missing'; result=1; }
+  [[ -f "$dst/.gemini/skills/foo/scripts/run.sh" ]] || { echo 'script missing'; result=1; }
+  [[ -f "$dst/.gemini/skills/foo/agents/openai.yaml" ]] || { echo 'openai.yaml missing'; result=1; }
+  grep -RIl '.platform/\|DISPATCHER.md' "$dst/.gemini/skills/foo" | grep -q . \
+    && { echo 'neutral path leaked from Gemini bundle'; result=1; }
   rm -rf "$src" "$dst"
   return $result
+}
+
+test_gemini_translate_skills_propagates_copy_bundle_failure() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)"
+  mkdir -p "$src/skills/a" "$src/skills/b"
+  touch "$src/skills/a/SKILL.md" "$src/skills/b/SKILL.md"
+
+  local original_copy; original_copy="$(declare -f copy_skill_bundle)"
+  local original_rewrite; original_rewrite="$(declare -f rewrite_skill_bundle_platform_paths)"
+  copy_skill_bundle() { [[ "$(basename "$1")" != "a" ]]; }
+  rewrite_skill_bundle_platform_paths() { return 0; }
+
+  local adapter_status=0
+  adapter_translate_skills "$src/skills" "$dst" || adapter_status=$?
+
+  eval "$original_copy"
+  eval "$original_rewrite"
+  rm -rf "$src" "$dst"
+  [[ $adapter_status -ne 0 ]] || { echo 'Gemini adapter masked copy_skill_bundle failure'; return 1; }
+}
+
+test_gemini_translate_skills_propagates_bundle_rewrite_failure() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)"
+  mkdir -p "$src/skills/a" "$src/skills/b"
+  touch "$src/skills/a/SKILL.md" "$src/skills/b/SKILL.md"
+
+  local original_copy; original_copy="$(declare -f copy_skill_bundle)"
+  local original_rewrite; original_rewrite="$(declare -f rewrite_skill_bundle_platform_paths)"
+  copy_skill_bundle() { return 0; }
+  rewrite_skill_bundle_platform_paths() { [[ "$(basename "$1")" != "a" ]]; }
+
+  local adapter_status=0
+  adapter_translate_skills "$src/skills" "$dst" || adapter_status=$?
+
+  eval "$original_copy"
+  eval "$original_rewrite"
+  rm -rf "$src" "$dst"
+  [[ $adapter_status -ne 0 ]] || { echo 'Gemini adapter masked bundle rewrite failure'; return 1; }
 }
 
 test_gemini_translate_skills_honors_exclude() {

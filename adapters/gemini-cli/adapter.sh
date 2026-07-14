@@ -98,9 +98,8 @@ adapter_translate_skills() {
     should_include "${skill_dir}SKILL.md" "$GEMINI_PLATFORM" || continue
     local name; name="$(basename "$skill_dir")"
     local out="$dst/.$GEMINI_FW_DIR/skills/$name"
-    mkdir -p "$out"
-    cp "${skill_dir}SKILL.md" "$out/SKILL.md"
-    rewrite_platform_paths "$out/SKILL.md" "$GEMINI_FW_DIR" "$GEMINI_DISPATCHER"
+    copy_skill_bundle "$skill_dir" "$out" || return 1
+    rewrite_skill_bundle_platform_paths "$out" "$GEMINI_FW_DIR" "$GEMINI_DISPATCHER" || return 1
   done
 }
 

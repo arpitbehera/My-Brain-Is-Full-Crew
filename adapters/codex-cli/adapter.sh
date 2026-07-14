@@ -189,8 +189,7 @@ _cc_rewrite_skill_markdown() {
   local skill_name="$1" file="$2"
   [[ -f "$file" ]] || return 0
 
-  rewrite_codex_paths "$file"
-  rewrite_tool_compat "$file"
+  rewrite_tool_compat "$file" || return 1
 
   case "$skill_name" in
     onboarding)
@@ -247,27 +246,30 @@ _cc_rewrite_skill_text_tree() {
   local skill_name="$1" root="$2"
   [[ -d "$root" ]] || return 0
 
+  local file
+  while IFS= read -r -d '' file; do
+    grep -Iq . "$file" || continue
+    rewrite_codex_paths "$file" || return 1
+  done < <(find "$root" -type f -print0)
+
   if [[ -f "$root/SKILL.md" ]]; then
-    _cc_rewrite_skill_markdown "$skill_name" "$root/SKILL.md"
+    _cc_rewrite_skill_markdown "$skill_name" "$root/SKILL.md" || return 1
   fi
 
   if [[ -d "$root/references" ]]; then
     while IFS= read -r ref; do
-      rewrite_codex_paths "$ref"
-      rewrite_tool_compat "$ref"
+      rewrite_tool_compat "$ref" || return 1
     done < <(find "$root/references" -type f -name '*.md')
   fi
 
   if [[ -d "$root/assets" ]]; then
     while IFS= read -r asset; do
-      rewrite_codex_paths "$asset"
-      rewrite_tool_compat "$asset"
+      rewrite_tool_compat "$asset" || return 1
     done < <(find "$root/assets" -type f -name '*.md')
   fi
 
   if [[ -f "$root/agents/openai.yaml" ]]; then
-    rewrite_codex_paths "$root/agents/openai.yaml"
-    rewrite_tool_compat "$root/agents/openai.yaml"
+    rewrite_tool_compat "$root/agents/openai.yaml" || return 1
   fi
 }
 
@@ -279,18 +281,8 @@ adapter_translate_skills() {
     should_include "${skill_dir}SKILL.md" "$CC_PLATFORM" || continue
     local name; name="$(basename "$skill_dir")"
     local out="$dst/.agents/skills/$name"
-    mkdir -p "$out"
-
-    cp "${skill_dir}SKILL.md" "$out/SKILL.md"
-    [[ -d "${skill_dir}scripts" ]] && mkdir -p "$out/scripts" && cp -R "${skill_dir}scripts/." "$out/scripts/"
-    [[ -d "${skill_dir}references" ]] && mkdir -p "$out/references" && cp -R "${skill_dir}references/." "$out/references/"
-    [[ -d "${skill_dir}assets" ]] && mkdir -p "$out/assets" && cp -R "${skill_dir}assets/." "$out/assets/"
-    if [[ -f "${skill_dir}agents/openai.yaml" ]]; then
-      mkdir -p "$out/agents"
-      cp "${skill_dir}agents/openai.yaml" "$out/agents/openai.yaml"
-    fi
-
-    _cc_rewrite_skill_text_tree "$name" "$out"
+    copy_skill_bundle "$skill_dir" "$out" || return 1
+    _cc_rewrite_skill_text_tree "$name" "$out" || return 1
   done
 }
 
