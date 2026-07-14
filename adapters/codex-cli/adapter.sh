@@ -348,16 +348,16 @@ adapter_translate_config() {
     echo ''
     echo '# Inherit uses the top-level defaults; named profiles override them explicitly.'
     echo '[profiles.quality]'
-    echo 'model = "gpt-5.5"'
+    echo 'model = "gpt-5.6-sol"'
     echo 'model_reasoning_effort = "high"'
     echo ''
     echo '[profiles.balanced]'
-    echo 'model = "gpt-5.5"'
-    echo 'model_reasoning_effort = "low"'
+    echo 'model = "gpt-5.6-terra"'
+    echo 'model_reasoning_effort = "high"'
     echo ''
     echo '[profiles.budget]'
-    echo 'model = "gpt-5.5"'
-    echo 'model_reasoning_effort = "low"'
+    echo 'model = "gpt-5.6-luna"'
+    echo 'model_reasoning_effort = "high"'
     echo ''
     echo '[agents]'
     echo 'max_depth = 1'
@@ -543,9 +543,10 @@ _cc_toml_escape_dquote_string() {
 _cc_model_to_codex() {
   local model="$1"
   case "$model" in
-    gpt-5.4|gpt-5.4-mini|gpt-5.3-codex-spark) echo "gpt-5.5" ;;
+    high|gpt-5.4) echo "gpt-5.6-sol" ;;
+    mid|gpt-5.4-mini) echo "gpt-5.6-terra" ;;
+    low|gpt-5.3-codex-spark) echo "gpt-5.6-luna" ;;
     */*|gpt-*) echo "$model" ;;
-    low|mid|high) echo "gpt-5.5" ;;
     *)         echo "$model" ;;
   esac
 }
@@ -555,8 +556,7 @@ _cc_model_to_codex() {
 _cc_model_reasoning_effort() {
   local model="$1"
   case "$model" in
-    high|gpt-5.4) echo "high" ;;
-    low|mid|gpt-5.4-mini|gpt-5.3-codex-spark) echo "low" ;;
+    high|mid|low|gpt-5.4|gpt-5.4-mini|gpt-5.3-codex-spark) echo "high" ;;
     *) echo "medium" ;;
   esac
 }
