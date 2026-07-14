@@ -268,3 +268,93 @@ test_rewrite_platform_paths_gemini() {
   rm -f "$tmp"
   return $result
 }
+
+test_copy_skill_bundle_preserves_only_supported_resources() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)/fixture"
+  mkdir -p "$src/scripts" "$src/references" "$src/assets" "$src/agents" "$src/extra"
+  printf '%s\n' 'Use .platform/skills/fixture/ and DISPATCHER.md.' > "$src/SKILL.md"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo .platform/agents/example.md' > "$src/scripts/run.sh"
+  printf '%s\n' 'See .platform/references/guide.md.' > "$src/references/guide.md"
+  printf '%s\n' 'See DISPATCHER.md.' > "$src/assets/template.md"
+  printf '%s\n' 'instruction: "Read .platform/references/guide.md"' > "$src/agents/openai.yaml"
+  printf '%s\n' 'ignored' > "$src/extra/ignored.txt"
+
+  copy_skill_bundle "$src" "$dst"
+
+  local result=0
+  [[ -f "$dst/SKILL.md" ]] || { echo 'SKILL.md missing'; result=1; }
+  [[ -f "$dst/scripts/run.sh" ]] || { echo 'script missing'; result=1; }
+  [[ -f "$dst/references/guide.md" ]] || { echo 'reference missing'; result=1; }
+  [[ -f "$dst/assets/template.md" ]] || { echo 'asset missing'; result=1; }
+  [[ -f "$dst/agents/openai.yaml" ]] || { echo 'openai.yaml missing'; result=1; }
+  [[ ! -e "$dst/extra" ]] || { echo 'unsupported extra directory copied'; result=1; }
+  rm -rf "$src" "$(dirname "$dst")"
+  return $result
+}
+
+test_copy_skill_bundle_propagates_copy_failure() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)/fixture"
+  mkdir -p "$src/scripts" "$dst"
+  printf '%s\n' 'Skill body.' > "$src/SKILL.md"
+  printf '%s\n' '#!/usr/bin/env bash' > "$src/scripts/run.sh"
+  printf '%s\n' 'blocked' > "$dst/scripts"
+
+  local status=0
+  copy_skill_bundle "$src" "$dst" 2>/dev/null || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'copy failure returned success'; result=1; }
+  rm -rf "$src" "$(dirname "$dst")"
+  return $result
+}
+
+test_copy_skill_bundle_missing_skill_returns_failure_without_destination() {
+  local src; src="$(mktemp -d)"
+  local dst; dst="$(mktemp -d)/fixture"
+
+  local status=0
+  copy_skill_bundle "$src" "$dst" || status=$?
+
+  local result=0
+  [[ $status -eq 1 ]] || { echo "expected status 1, got $status"; result=1; }
+  [[ ! -e "$dst" ]] || { echo 'destination created without SKILL.md'; result=1; }
+  rm -rf "$src" "$(dirname "$dst")"
+  return $result
+}
+
+test_rewrite_skill_bundle_platform_paths_rewrites_text_tree() {
+  local root; root="$(mktemp -d)"
+  mkdir -p "$root/references" "$root/assets" "$root/agents"
+  printf '%s\n' '.platform/skills/fixture/ DISPATCHER.md' > "$root/SKILL.md"
+  printf '%s\n' '.platform/references/guide.md' > "$root/references/guide.md"
+  printf '%s\n' '.platform/agents/example.md' > "$root/assets/template.md"
+  printf '%s\n' 'instruction: DISPATCHER.md' > "$root/agents/openai.yaml"
+
+  rewrite_skill_bundle_platform_paths "$root" "gemini" "GEMINI.md"
+
+  local result=0
+  grep -RIl '.platform/\|DISPATCHER.md' "$root" | grep -q . \
+    && { echo 'platform-neutral path leaked'; result=1; }
+  grep -Fq '.gemini/references/guide.md' "$root/references/guide.md" \
+    || { echo 'reference path not rewritten'; result=1; }
+  grep -Fq 'GEMINI.md' "$root/agents/openai.yaml" \
+    || { echo 'dispatcher path not rewritten'; result=1; }
+  rm -rf "$root"
+  return $result
+}
+
+test_rewrite_skill_bundle_platform_paths_preserves_caller_file_variable() {
+  local root; root="$(mktemp -d)"
+  printf '%s\n' '.platform/skills/fixture/' > "$root/SKILL.md"
+  local file='caller-value'
+
+  rewrite_skill_bundle_platform_paths "$root" "gemini" "GEMINI.md"
+
+  local result=0
+  [[ "$file" == 'caller-value' ]] \
+    || { echo "caller file variable clobbered: $file"; result=1; }
+  rm -rf "$root"
+  return $result
+}

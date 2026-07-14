@@ -32,6 +32,37 @@ rewrite_platform_paths() {
   mv "$tmp" "$file"
 }
 
+copy_skill_bundle() {
+  local src="$1" dst="$2"
+  [[ -f "$src/SKILL.md" ]] || return 1
+  mkdir -p "$dst" || return 1
+  cp "$src/SKILL.md" "$dst/SKILL.md" || return 1
+
+  local dir
+  for dir in scripts references assets; do
+    if [[ -d "$src/$dir" ]]; then
+      mkdir -p "$dst/$dir" || return 1
+      cp -R "$src/$dir/." "$dst/$dir/" || return 1
+    fi
+  done
+
+  if [[ -f "$src/agents/openai.yaml" ]]; then
+    mkdir -p "$dst/agents" || return 1
+    cp "$src/agents/openai.yaml" "$dst/agents/openai.yaml" || return 1
+  fi
+}
+
+rewrite_skill_bundle_platform_paths() {
+  local root="$1" platform_dir="$2" dispatcher="$3"
+  [[ -d "$root" ]] || return 0
+
+  local file
+  while IFS= read -r -d '' file; do
+    grep -Iq . "$file" || continue
+    rewrite_platform_paths "$file" "$platform_dir" "$dispatcher"
+  done < <(find "$root" -type f -print0)
+}
+
 # ── Parsing helpers ──────────────────────────────────────────────────────────
 
 # parse_frontmatter <file> <key>
