@@ -4,7 +4,7 @@
 
 ## ABSOLUTE CONSTRAINT: ONLY skills and agents from THIS project
 
-Your crew consists of **14 skills** (in `.platform/skills/`) and **8 core agents** (in `.platform/agents/`). Your agent platform auto-loads both at session start.
+Your crew consists of **19 skills** (in `.platform/skills/`) and **8 core agents** (in `.platform/agents/`). Your agent platform auto-loads both at session start.
 
 The 8 core agents are:
 
@@ -37,6 +37,12 @@ Custom agents created by the Architect are also valid. Check `.platform/referenc
 
 Skills handle complex, multi-step flows. **Check this table BEFORE the agent table.** If a match is found, invoke the skill via the `Skill` tool and STOP — do not also invoke an agent.
 
+**Overlap resolution:**
+- Select by the requested output artifact or operation, not incidental input or source terms.
+- An explicit target extension or artifact wins: `.canvas` or Obsidian Canvas → `/json-canvas`; Mermaid inside an Obsidian `.md` note → `/obsidian-markdown`.
+- Use `/defuddle` only when the primary goal is reading or extracting page content. A URL ending in `.md` is direct Markdown retrieval, not Defuddle.
+- When terms overlap, choose the single best skill using these qualifiers, then STOP. Do not chain or fall back to an agent.
+
 | # | Skill | Description | Triggers |
 |---|-------|-------------|----------|
 | 1 | `/onboarding` | First-time vault setup. Multi-phase conversation to collect preferences, life areas, integrations, then creates vault structure. | EN: "initialize the vault", "set up the vault", "onboarding", "vault setup" · IT: "inizializza il vault", "configura il vault", "setup del vault" · FR: "initialiser le vault", "configurer le vault" · ES: "inicializar el vault", "configurar el vault" · DE: "Vault initialisieren", "Vault einrichten" · PT: "inicializar o vault", "configurar o vault" · JA: "Vaultを初期化", "Vaultをセットアップ" |
@@ -53,6 +59,11 @@ Skills handle complex, multi-step flows. **Check this table BEFORE the agent tab
 | 12 | `/tag-garden` | Analyze all vault tags: unused, orphan, near-duplicates, over/under-used. Suggest merges. | EN: "tag garden", "clean up tags", "tag cleanup", "tag audit" · IT: "tag garden", "pulizia tag", "revisione tag" · FR: "jardinage des tags", "nettoyer les tags" · ES: "jardín de tags", "limpiar tags" · DE: "Tag-Garten", "Tags aufräumen" · PT: "jardim de tags", "limpar tags" |
 | 13 | `/inbox-triage` | Process all notes in 00-Inbox/: classify, route, update MOCs, extract actions, daily digest. | EN: "triage the inbox", "clean up the inbox", "sort my notes", "empty inbox", "file my notes", "process the inbox" · IT: "smista l'inbox", "svuota l'inbox", "ordina le note", "triage dell'inbox", "processa l'inbox" · FR: "trier la boîte de réception", "vider l'inbox", "classer mes notes" · ES: "clasificar la bandeja de entrada", "vaciar el inbox", "ordenar mis notas" · DE: "Inbox sortieren", "Inbox leeren", "Notizen einordnen" · PT: "triagem da inbox", "esvaziar a inbox", "organizar minhas notas" |
 | 14 | `/contact-sync` | Sync a person to Apple Contacts: search, create if missing, update if incomplete. Requires `apple-contacts` MCP. | EN: "sync contact", "add to contacts", "save contact", "update contact", "is this person in my contacts" · IT: "sincronizza contatto", "aggiungi ai contatti", "salva contatto", "aggiorna contatto" · FR: "synchroniser le contact", "ajouter aux contacts" · ES: "sincronizar contacto", "agregar a contactos" · DE: "Kontakt synchronisieren", "zu Kontakten hinzufuegen" · PT: "sincronizar contato", "adicionar aos contatos" |
+| 15 | `/defuddle` | Extract clean Markdown from web pages, removing navigation and page clutter before reading or saving content. | EN: URL to read/analyze, online docs, articles, blog posts, standard web pages, "extract this page", "clean markdown from this URL" |
+| 16 | `/json-canvas` | Create and edit Obsidian JSON Canvas files with nodes, edges, groups, and visual connections. | EN: ".canvas file", "Canvas file", "create a canvas", "edit canvas", "mind map", "flowchart", "visual canvas", "connect canvas nodes" |
+| 17 | `/obsidian-bases` | Create and edit Obsidian Bases with views, filters, formulas, summaries, and database-like note views. | EN: ".base file", "Bases", "table view", "card view", "list view", "map view", "filters", "formulas", "database view", "note database" |
+| 18 | `/obsidian-cli` | Interact with a running Obsidian vault from the command line: read, create, search, manage notes/tasks/properties, and debug plugins/themes. | EN: "use Obsidian CLI", "search vault with CLI", "create note with CLI", "manage notes", "manage tasks", "reload plugin", "run JavaScript in Obsidian", "capture Obsidian errors", "inspect DOM" |
+| 19 | `/obsidian-markdown` | Create and edit Obsidian Flavored Markdown including wikilinks, embeds, callouts, properties, tags, comments, math, and Mermaid. | EN: ".md file in Obsidian", "wikilink", "embed", "callout", "frontmatter", "properties", "tags", "Obsidian note", "format this note" |
 
 ---
 
