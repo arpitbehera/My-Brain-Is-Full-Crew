@@ -358,3 +358,274 @@ test_rewrite_skill_bundle_platform_paths_preserves_caller_file_variable() {
   rm -rf "$root"
   return $result
 }
+
+test_rewrite_platform_paths_preserves_file_when_sed_fails() {
+  local fixture; fixture="$(mktemp)"
+  local expected; expected="$(mktemp)"
+  printf '%s\n' '.platform/skills/fixture/ DISPATCHER.md' > "$fixture"
+  cp "$fixture" "$expected"
+
+  local status=0
+  (
+    sed() { return 42; }
+    rewrite_platform_paths "$fixture" "gemini" "GEMINI.md"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'sed failure returned success'; result=1; }
+  cmp -s "$expected" "$fixture" || { echo 'sed failure changed original file'; result=1; }
+  rm -f "$fixture" "$expected"
+  return $result
+}
+
+test_rewrite_skill_bundle_platform_paths_propagates_file_failure() {
+  local root; root="$(mktemp -d)"
+  printf '%s\n' '.platform/skills/fixture/' > "$root/first.md"
+  printf '%s\n' 'DISPATCHER.md' > "$root/second.md"
+
+  local status=0
+  (
+    local calls=0
+    rewrite_platform_paths() {
+      calls=$((calls + 1))
+      [[ $calls -ne 1 ]]
+    }
+    rewrite_skill_bundle_platform_paths "$root" "gemini" "GEMINI.md"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'bundle rewrite masked file failure'; result=1; }
+  rm -rf "$root"
+  return $result
+}
+
+test_rewrite_skill_bundle_platform_paths_preserves_executable_resource() {
+  local root; root="$(mktemp -d)"
+  mkdir -p "$root/scripts"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo .platform/agents/example.md DISPATCHER.md' \
+    > "$root/scripts/run.sh"
+  chmod +x "$root/scripts/run.sh"
+
+  rewrite_skill_bundle_platform_paths "$root" "gemini" "GEMINI.md"
+
+  local result=0
+  grep -Fq '.gemini/agents/example.md GEMINI.md' "$root/scripts/run.sh" \
+    || { echo 'executable resource paths not rewritten'; result=1; }
+  [[ -x "$root/scripts/run.sh" ]] || { echo 'executable bit not preserved'; result=1; }
+  rm -rf "$root"
+  return $result
+}
+
+test_rewrite_platform_paths_rewrites_read_only_file_and_preserves_mode() {
+  local fixture; fixture="$(mktemp)"
+  printf '%s\n' '.platform/skills/fixture/ DISPATCHER.md' > "$fixture"
+  chmod 0444 "$fixture"
+
+  local status=0
+  rewrite_platform_paths "$fixture" "gemini" "GEMINI.md" || status=$?
+
+  local mode=''
+  if mode="$(stat -c '%a' "$fixture" 2>/dev/null)"; then
+    :
+  else
+    mode="$(stat -f '%Lp' "$fixture")"
+  fi
+  local result=0
+  [[ $status -eq 0 ]] || { echo "read-only rewrite failed with status $status"; result=1; }
+  grep -Fq '.gemini/skills/fixture/ GEMINI.md' "$fixture" \
+    || { echo 'read-only file content not rewritten'; result=1; }
+  [[ "$mode" == '444' ]] || { echo "expected mode 444, got $mode"; result=1; }
+  rm -f "$fixture"
+  return $result
+}
+
+test_rewrite_platform_paths_preserves_file_when_stat_fails() {
+  local fixture; fixture="$(mktemp)"
+  local expected; expected="$(mktemp)"
+  printf '%s\n' '.platform/skills/fixture/ DISPATCHER.md' > "$fixture"
+  cp "$fixture" "$expected"
+
+  local status=0
+  (
+    stat() { return 42; }
+    rewrite_platform_paths "$fixture" "gemini" "GEMINI.md"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'stat failure returned success'; result=1; }
+  cmp -s "$expected" "$fixture" || { echo 'stat failure changed original file'; result=1; }
+  rm -f "$fixture" "$expected"
+  return $result
+}
+
+test_rewrite_platform_paths_preserves_file_when_chmod_fails() {
+  local fixture; fixture="$(mktemp)"
+  local expected; expected="$(mktemp)"
+  printf '%s\n' '.platform/skills/fixture/ DISPATCHER.md' > "$fixture"
+  cp "$fixture" "$expected"
+
+  local status=0
+  (
+    chmod() { return 42; }
+    rewrite_platform_paths "$fixture" "gemini" "GEMINI.md"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'chmod failure returned success'; result=1; }
+  cmp -s "$expected" "$fixture" || { echo 'chmod failure changed original file'; result=1; }
+  rm -f "$fixture" "$expected"
+  return $result
+}
+
+test_copy_skill_bundle_rejects_symlinked_source_root() {
+  local base; base="$(mktemp -d)"
+  mkdir -p "$base/external"
+  printf '%s\n' 'external skill' > "$base/external/SKILL.md"
+  ln -s "$base/external" "$base/source"
+
+  local status=0
+  copy_skill_bundle "$base/source/" "$base/dst" || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'symlinked source root returned success'; result=1; }
+  [[ ! -e "$base/dst/SKILL.md" ]] || { echo 'external root skill copied'; result=1; }
+  rm -rf "$base"
+  return $result
+}
+
+test_copy_skill_bundle_rejects_symlinked_skill_md() {
+  local base; base="$(mktemp -d)"
+  mkdir -p "$base/source"
+  printf '%s\n' 'external skill' > "$base/external-skill.md"
+  ln -s "$base/external-skill.md" "$base/source/SKILL.md"
+
+  local status=0
+  copy_skill_bundle "$base/source" "$base/dst" || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'symlinked SKILL.md returned success'; result=1; }
+  [[ ! -e "$base/dst/SKILL.md" ]] || { echo 'external SKILL.md copied'; result=1; }
+  rm -rf "$base"
+  return $result
+}
+
+test_copy_skill_bundle_rejects_symlinked_allowlisted_directory() {
+  local base; base="$(mktemp -d)"
+  mkdir -p "$base/source" "$base/external-assets"
+  printf '%s\n' 'skill body' > "$base/source/SKILL.md"
+  printf '%s\n' 'external asset' > "$base/external-assets/secret.txt"
+  ln -s "$base/external-assets" "$base/source/assets"
+
+  local status=0
+  copy_skill_bundle "$base/source" "$base/dst" || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'symlinked assets directory returned success'; result=1; }
+  [[ ! -e "$base/dst/assets/secret.txt" ]] || { echo 'external asset copied'; result=1; }
+  rm -rf "$base"
+  return $result
+}
+
+test_copy_skill_bundle_rejects_nested_symlinks_in_resources() {
+  local result=0 dir
+  for dir in scripts references assets; do
+    local base; base="$(mktemp -d)"
+    mkdir -p "$base/source/$dir"
+    printf '%s\n' 'skill body' > "$base/source/SKILL.md"
+    printf '%s\n' 'external resource' > "$base/external.txt"
+    ln -s "$base/external.txt" "$base/source/$dir/escape.txt"
+
+    local status=0
+    copy_skill_bundle "$base/source" "$base/dst" || status=$?
+    [[ $status -ne 0 ]] || { echo "nested $dir symlink returned success"; result=1; }
+    [[ ! -e "$base/dst/$dir/escape.txt" && ! -L "$base/dst/$dir/escape.txt" ]] \
+      || { echo "external $dir symlink copied"; result=1; }
+    rm -rf "$base"
+  done
+  return $result
+}
+
+test_copy_skill_bundle_rejects_symlinked_agents_directory() {
+  local base; base="$(mktemp -d)"
+  mkdir -p "$base/source" "$base/external-agents"
+  printf '%s\n' 'skill body' > "$base/source/SKILL.md"
+  printf '%s\n' 'external agent' > "$base/external-agents/openai.yaml"
+  ln -s "$base/external-agents" "$base/source/agents"
+
+  local status=0
+  copy_skill_bundle "$base/source" "$base/dst" || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'symlinked agents directory returned success'; result=1; }
+  [[ ! -e "$base/dst/agents/openai.yaml" ]] || { echo 'external agent copied'; result=1; }
+  rm -rf "$base"
+  return $result
+}
+
+test_copy_skill_bundle_rejects_symlinked_openai_yaml() {
+  local base; base="$(mktemp -d)"
+  mkdir -p "$base/source/agents"
+  printf '%s\n' 'skill body' > "$base/source/SKILL.md"
+  printf '%s\n' 'external agent' > "$base/external-agent.yaml"
+  ln -s "$base/external-agent.yaml" "$base/source/agents/openai.yaml"
+
+  local status=0
+  copy_skill_bundle "$base/source" "$base/dst" || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'symlinked openai.yaml returned success'; result=1; }
+  [[ ! -e "$base/dst/agents/openai.yaml" ]] || { echo 'external openai.yaml copied'; result=1; }
+  rm -rf "$base"
+  return $result
+}
+
+test_copy_skill_bundle_propagates_symlink_scan_failure() {
+  local base; base="$(mktemp -d)"
+  mkdir -p "$base/source/scripts"
+  printf '%s\n' 'skill body' > "$base/source/SKILL.md"
+  printf '%s\n' '#!/usr/bin/env bash' > "$base/source/scripts/run.sh"
+
+  local status=0
+  (
+    find() { return 42; }
+    copy_skill_bundle "$base/source" "$base/dst"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'symlink scan failure returned success'; result=1; }
+  [[ ! -e "$base/dst" ]] || { echo 'destination created after symlink scan failure'; result=1; }
+  rm -rf "$base"
+  return $result
+}
+
+test_rewrite_skill_bundle_platform_paths_propagates_grep_error() {
+  local root; root="$(mktemp -d)"
+  printf '%s\n' '.platform/skills/fixture/' > "$root/SKILL.md"
+
+  local status=0
+  (
+    grep() { return 2; }
+    rewrite_skill_bundle_platform_paths "$root" "gemini" "GEMINI.md"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'grep error returned success'; result=1; }
+  rm -rf "$root"
+  return $result
+}
+
+test_rewrite_skill_bundle_platform_paths_propagates_find_error() {
+  local root; root="$(mktemp -d)"
+  printf '%s\n' '.platform/skills/fixture/' > "$root/SKILL.md"
+
+  local status=0
+  (
+    find() { return 42; }
+    rewrite_skill_bundle_platform_paths "$root" "gemini" "GEMINI.md"
+  ) || status=$?
+
+  local result=0
+  [[ $status -ne 0 ]] || { echo 'find error returned success'; result=1; }
+  rm -rf "$root"
+  return $result
+}

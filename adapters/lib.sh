@@ -27,18 +27,51 @@ MODEL_VOCAB="low mid high"
 # passing its platform-specific directory name and dispatcher filename.
 rewrite_platform_paths() {
   local file="$1" platform_dir="$2" dispatcher="$3"
-  local tmp; tmp="$(mktemp)"
-  sed "s|\.platform/|.${platform_dir}/|g; s|DISPATCHER\.md|${dispatcher}|g" "$file" > "$tmp"
-  mv "$tmp" "$file"
+  local tmp mode
+  tmp="$(mktemp)" || return 1
+  if mode="$(stat -c '%a' "$file" 2>/dev/null)"; then
+    :
+  elif mode="$(stat -f '%Lp' "$file" 2>/dev/null)"; then
+    :
+  else
+    rm -f "$tmp"
+    return 1
+  fi
+  if ! sed "s|\.platform/|.${platform_dir}/|g; s|DISPATCHER\.md|${dispatcher}|g" "$file" > "$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  if ! chmod "$mode" "$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  if ! mv "$tmp" "$file"; then
+    rm -f "$tmp"
+    return 1
+  fi
 }
 
 copy_skill_bundle() {
   local src="$1" dst="$2"
-  [[ -f "$src/SKILL.md" ]] || return 1
+  local normalized_src="${src%/}"
+  [[ -n "$normalized_src" ]] || normalized_src='/'
+  [[ ! -L "$normalized_src" ]] || return 1
+  [[ -f "$src/SKILL.md" && ! -L "$src/SKILL.md" ]] || return 1
+
+  local dir link
+  for dir in scripts references assets; do
+    [[ ! -L "$src/$dir" ]] || return 1
+    if [[ -d "$src/$dir" ]]; then
+      link="$(find "$src/$dir" -type l -print -quit)" || return 1
+      [[ -z "$link" ]] || return 1
+    fi
+  done
+  [[ ! -L "$src/agents" ]] || return 1
+  [[ ! -L "$src/agents/openai.yaml" ]] || return 1
+
   mkdir -p "$dst" || return 1
   cp "$src/SKILL.md" "$dst/SKILL.md" || return 1
 
-  local dir
   for dir in scripts references assets; do
     if [[ -d "$src/$dir" ]]; then
       mkdir -p "$dst/$dir" || return 1
@@ -56,11 +89,31 @@ rewrite_skill_bundle_platform_paths() {
   local root="$1" platform_dir="$2" dispatcher="$3"
   [[ -d "$root" ]] || return 0
 
-  local file
+  local manifest
+  manifest="$(mktemp)" || return 1
+  if ! find "$root" -type f -print0 > "$manifest"; then
+    rm -f "$manifest"
+    return 1
+  fi
+
+  local file grep_status
   while IFS= read -r -d '' file; do
-    grep -Iq . "$file" || continue
-    rewrite_platform_paths "$file" "$platform_dir" "$dispatcher"
-  done < <(find "$root" -type f -print0)
+    if grep -Iq . "$file"; then
+      :
+    else
+      grep_status=$?
+      if [[ $grep_status -eq 1 ]]; then
+        continue
+      fi
+      rm -f "$manifest"
+      return 1
+    fi
+    if ! rewrite_platform_paths "$file" "$platform_dir" "$dispatcher"; then
+      rm -f "$manifest"
+      return 1
+    fi
+  done < "$manifest"
+  rm -f "$manifest" || return 1
 }
 
 # ── Parsing helpers ──────────────────────────────────────────────────────────
