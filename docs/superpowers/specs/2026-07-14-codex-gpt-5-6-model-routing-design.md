@@ -44,7 +44,7 @@ Tests will be changed before production code and observed failing against the GP
 - Unit-level shell assertions cover all three abstract tiers, all three legacy identifiers, and passthrough behavior.
 - Generated-config assertions cover the three profile model and effort pairs.
 - Agent translation coverage verifies CRLF frontmatter still produces luna with high effort.
-- Real-corpus coverage verifies a high-tier agent uses sol and a low-tier agent uses luna, both at high effort.
+- Real-corpus coverage verifies a high-tier agent uses sol and a mid-tier agent uses terra, both at high effort. The synthetic CRLF case covers the low-to-luna route.
 - The focused Codex adapter suite runs after implementation, followed by the repository's full test suite and diff checks.
 
 ## Source Guidance
