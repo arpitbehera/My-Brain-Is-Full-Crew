@@ -1,7 +1,7 @@
 <h1 align="center">🧠 My Brain Is Full — Crew</h1>
 
 <p align="center">
-  <strong>A team of 8+ AI agents and 14 specialized skills that manage your Obsidian vault<br>so your brain doesn't have to.</strong>
+  <strong>A team of 8+ AI agents and 19 specialized skills that manage your Obsidian vault<br>so your brain doesn't have to.</strong>
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Agents-8%2B-blueviolet?style=flat-square" alt="8+ Agents" />
-  <img src="https://img.shields.io/badge/Skills-14-blue?style=flat-square" alt="14 Skills" />
+  <img src="https://img.shields.io/badge/Skills-19-blue?style=flat-square" alt="19 Skills" />
   <img src="https://img.shields.io/badge/Language-Any-success?style=flat-square" alt="Any Language" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
 </p>
@@ -119,18 +119,18 @@ Key points:
 | 7 | **Transcriber** | Audio & Meetings | Turns recordings and transcripts into rich, structured meeting notes |
 | 8 | **Postman** | Email & Calendar | Bridges email (Gmail or Hey.com) and Google Calendar with your vault: deadline radar, meeting prep |
 
-> **Agents + Skills = the full system.** Each agent handles quick, reactive tasks. For complex multi-step workflows (like onboarding, email triage, or vault audits), the dispatcher routes to one of **14 specialized skills** that run as guided conversations. See the [Skills](#skills) section below.
+> **Agents + Skills = the full system.** Each agent handles quick, reactive tasks. The dispatcher routes guided workflows and Obsidian-native file operations to one of **19 specialized skills**. See the [Skills](#skills) section below.
 
 ---
 
 ## Skills
 
-Skills handle the complex, multi-step workflows that need conversational context. While agents are great for quick, one-shot tasks, some operations — like onboarding or email triage — require a back-and-forth conversation. Skills run in the main conversation context, so they can ask questions, wait for answers, and maintain state naturally.
+Skills provide focused workflows and format knowledge. Some operations — like onboarding or email triage — need conversational context; others create Obsidian-native Markdown, Bases, and Canvas files or interact with supporting CLIs. Skills run in the main conversation context, so they can maintain state and work directly with your vault.
 
 The dispatcher automatically routes your message to the right skill or agent. You don't need to remember which is which.
 
-| Skill | What it does | Extracted from |
-|-------|-------------|----------------|
+| Skill | What it does | Source |
+|-------|-------------|--------|
 | `/onboarding` | Full vault setup conversation | Architect |
 | `/create-agent` | Design a custom agent step by step | Architect |
 | `/manage-agent` | Edit, remove, or list custom agents | Architect |
@@ -145,6 +145,13 @@ The dispatcher automatically routes your message to the right skill or agent. Yo
 | `/tag-garden` | Tag analysis and cleanup | Librarian |
 | `/inbox-triage` | Process and route inbox notes | Sorter |
 | `/contact-sync` | Sync contacts to Apple Contacts (search, create, update) | Postman |
+| `/defuddle` | Extract clean Markdown from web pages | Obsidian toolkit |
+| `/json-canvas` | Create and edit Obsidian JSON Canvas files | Obsidian toolkit |
+| `/obsidian-bases` | Create and edit Obsidian Bases | Obsidian toolkit |
+| `/obsidian-cli` | Read, search, and manage a vault through Obsidian CLI | Obsidian toolkit |
+| `/obsidian-markdown` | Create and edit Obsidian Flavored Markdown | Obsidian toolkit |
+
+All four platform adapters install complete skill bundles, including bundled `references/`, `scripts/`, `assets/`, and `agents/openai.yaml` resources when present. `/defuddle` requires Defuddle CLI; `/obsidian-cli` requires Obsidian CLI and a running Obsidian instance. The other three Obsidian toolkit skills work directly with vault files.
 
 ---
 
@@ -171,14 +178,14 @@ graph TB
     Dispatcher -->|"no skill match?\ninvoke agent"| Agents
     Dispatcher -->|"chains agents when needed"| Agents
 
-    subgraph Skills["Specialized Skills (14)"]
+    subgraph Skills["Specialized Skills (19)"]
         direction TB
         Onboarding["/onboarding"]
         EmailTriage["/email-triage"]
         Transcribe["/transcribe"]
         InboxTriage["/inbox-triage"]
         VaultAudit["/vault-audit"]
-        MoreSkills["... +9 more"]
+        MoreSkills["... +14 more"]
     end
 
     subgraph Agents["The Crew (8 agents)"]
@@ -444,7 +451,7 @@ My-Brain-Is-Full-Crew/               ← cloned inside your vault
 │   ├── librarian.md                   Vault health & maintenance
 │   ├── transcriber.md                 Audio & meeting transcription
 │   └── postman.md                     Email & calendar integration
-├── skills/                          The 14 specialized skills
+├── skills/                          The 19 specialized skills
 │   ├── onboarding/SKILL.md            Full vault setup conversation
 │   ├── create-agent/SKILL.md          Design a custom agent step by step
 │   ├── manage-agent/SKILL.md          Edit, remove, or list custom agents
@@ -458,7 +465,12 @@ My-Brain-Is-Full-Crew/               ← cloned inside your vault
 │   ├── deep-clean/SKILL.md            Extended vault cleanup
 │   ├── tag-garden/SKILL.md            Tag analysis and cleanup
 │   ├── inbox-triage/SKILL.md          Process and route inbox notes
-│   └── contact-sync/SKILL.md          Sync contacts to Apple Contacts
+│   ├── contact-sync/SKILL.md          Sync contacts to Apple Contacts
+│   ├── defuddle/SKILL.md              Extract clean Markdown from web pages
+│   ├── json-canvas/                    JSON Canvas skill + references
+│   ├── obsidian-bases/                 Obsidian Bases skill + references
+│   ├── obsidian-cli/SKILL.md           Operate a running Obsidian instance
+│   └── obsidian-markdown/              Obsidian Markdown skill + references
 ├── orchestra/                       Named scripts for permission-free agent operations
 │   ├── hey-imbox, hey-feed, ...       Hey mailbox wrappers
 │   ├── tracker-today, tracker-search  Local tracker queries
@@ -510,7 +522,7 @@ your-vault/
 │   ├── references/           ← shared docs
 │   └── config.toml           ← MCP servers + profiles + sandbox policy
 ├── .agents/
-│   └── skills/               ← 14 specialized skills
+│   └── skills/               ← 19 specialized skills
 ├── Meta/
 │   └── scripts/              ← orchestra scripts
 ├── AGENTS.md                 ← dispatcher (Codex reads this)

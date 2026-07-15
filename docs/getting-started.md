@@ -107,7 +107,7 @@ When it's done, your vault will look like this (paths vary by platform):
 your-vault/
 ├── .<platform>/         ← .claude/, .gemini/, .opencode/
 │   ├── agents/          ← 8 lightweight crew agents
-│   ├── skills/          ← 14 specialized skills for complex flows
+│   ├── skills/          ← 19 specialized skills and their bundled resources
 │   ├── hooks/           ← file protection and validation
 │   └── references/      ← shared docs the agents read
 ├── CLAUDE.md / GEMINI.md / AGENTS.md  ← dispatcher (varies by platform)
@@ -124,11 +124,13 @@ your-vault/
 │   ├── references/      ← shared docs
 │   └── config.toml      ← MCP servers + profiles + sandbox policy
 ├── .agents/
-│   └── skills/          ← 14 specialized skills
+│   └── skills/          ← 19 specialized skills and their bundled resources
 ├── AGENTS.md            ← dispatcher
 ├── My-Brain-Is-Full-Crew/  ← the repo (for future updates)
 └── ... your Obsidian notes
 ```
+
+Five included skills add Obsidian-native operations: `/defuddle`, `/json-canvas`, `/obsidian-bases`, `/obsidian-cli`, and `/obsidian-markdown`. `/defuddle` needs Defuddle CLI installed; `/obsidian-cli` needs Obsidian CLI plus a running Obsidian instance. Canvas, Bases, and Markdown skills work directly with vault files. Missing optional CLIs are reported with setup guidance; the Crew does not install them automatically.
 
 > **Something went wrong?** The most common issue is that `git` isn't installed. On Mac, the terminal will prompt you to install it automatically. On Windows, download it from [git-scm.com](https://git-scm.com). If you're stuck, just show this page to a tech-savvy friend. It takes 60 seconds.
 

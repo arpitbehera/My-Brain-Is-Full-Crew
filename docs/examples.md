@@ -192,6 +192,8 @@ Once inside the interactive `codex` session, the Crew works the same way as on o
 "Triage my inbox"              → /inbox-triage skill runs
 "Check my email"               → /email-triage skill scans Gmail
 "Weekly review"                → /vault-audit skill audits vault
+"Create a canvas for this project" → /json-canvas skill creates a .canvas file
+"Format this as an Obsidian note"  → /obsidian-markdown skill applies Obsidian syntax
 ```
 
 ### Update after a git pull
@@ -202,7 +204,7 @@ git pull
 bash scripts/updateme.sh --platform codex-cli
 ```
 
-For the full runtime smoke matrix covering all 8 agents, all 14 skills, bounded child-agent chaining, and MCP visibility, see [docs/codex-cli.md](codex-cli.md).
+For the full runtime smoke matrix covering all 8 agents, all 19 skills, bounded child-agent chaining, bundled skill resources, and MCP visibility, see [docs/codex-cli.md](codex-cli.md).
 
 ---
 

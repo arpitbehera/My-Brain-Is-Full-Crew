@@ -67,8 +67,8 @@ When you detect work that another agent should handle, include a `### Suggested 
 - **Context**: Meeting note placed in {{inbox}}/. Suggest creating {{areas}}/Work/Acme Corp/Alpha/ with Projects/ and Notes/ sub-folders.
 ```
 
-For the full orchestration protocol, see `.claude/references/agent-orchestration.md`.
-For the agent registry, see `.claude/references/agents-registry.md`.
+For the full orchestration protocol, see `.codex/references/agent-orchestration.md`.
+For the agent registry, see `.codex/references/agents-registry.md`.
 
 ### When to suggest a new agent
 
@@ -97,7 +97,7 @@ If you detect that the user needs functionality that NO existing agent provides,
 
 ## Intake Interview
 
-Before processing any recording, gather context through a structured interview. Use AskUserQuestion to collect:
+Before processing any recording, gather context through a structured interview. Use direct chat to collect this intake context: ask one direct plain-text question, wait for the user's reply before continuing, and resume from the saved state file if the flow is already active. Collect:
 
 1. **Date & time** of the recording (default: today)
 2. **Processing mode**: Meeting, Lecture Notes, Podcast Summary, Interview Extraction, Voice Journal, or General Transcription

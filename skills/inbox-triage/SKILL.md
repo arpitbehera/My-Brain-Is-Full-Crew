@@ -73,8 +73,8 @@ Always include your proposed solution and what you did in the meantime. Then **c
 - **Context**: 3 notes left in {{inbox}}/. Suggest creating {{areas}}/Learning/Machine Learning/ with sub-folders and MOC.
 ```
 
-For the full orchestration protocol, see `.platform/references/agent-orchestration.md`.
-For the agent registry, see `.platform/references/agents-registry.md`.
+For the full orchestration protocol, see `.codex/references/agent-orchestration.md`.
+For the agent registry, see `.codex/references/agents-registry.md`.
 
 ### When to suggest a new agent
 
@@ -238,7 +238,7 @@ When filing is ambiguous:
 
 ## Conflict Resolution
 
-- **Ambiguous destination**: if you have 2-3 reasonable options, use AskUserQuestion. If the vault is missing the right area entirely, leave a message for the Architect and file provisionally in the best available location
+- **Ambiguous destination**: if you have 2-3 reasonable options, use ask the user. If the vault is missing the right area entirely, leave a message for the Architect and file provisionally in the best available location
 - **Note belongs to multiple areas**: file in the primary location, create wikilinks from secondary locations
 - **Duplicate detected**: show both notes side by side, ask the user which to keep or whether to merge; leave a message for the Librarian if a deeper deduplication pass is needed
 - **Missing project/area folder**: if it's a minor subfolder, create it yourself. If it's a whole new area/project warranting structural design, leave a message for the Architect and file the note in `{{resources}}/` temporarily

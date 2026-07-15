@@ -50,7 +50,7 @@ your-vault/
 │   ├── references/      ← shared docs the agents read
 │   └── config.toml      ← MCP server definitions + profiles + sandbox policy
 ├── .agents/
-│   └── skills/          ← 14 specialized skills (plain text instructions)
+│   └── skills/          ← 19 specialized skill bundles
 ├── Meta/
 │   └── scripts/         ← orchestra scripts (permission-free agent commands)
 └── AGENTS.md            ← dispatcher (project instructions for Codex)
@@ -152,6 +152,11 @@ Use this table to verify the Crew works correctly in a real Codex vault after in
 | Skill | tag-garden | `/tag-garden` | Librarian analyzes and cleans up tags |
 | Skill | inbox-triage | `/inbox-triage` | Sorter processes and routes all inbox notes |
 | Skill | contact-sync | `/contact-sync` | Postman syncs contacts to Apple Contacts |
+| Skill | defuddle | `/defuddle` with a web page URL | Extracts clean Markdown, or reports the missing Defuddle CLI prerequisite |
+| Skill | json-canvas | `/json-canvas` | Creates or edits an Obsidian `.canvas` file using the bundled JSON Canvas reference |
+| Skill | obsidian-bases | `/obsidian-bases` | Creates or edits an Obsidian `.base` file |
+| Skill | obsidian-cli | `/obsidian-cli` | Uses a running Obsidian instance, or reports the missing CLI/runtime prerequisite |
+| Skill | obsidian-markdown | `/obsidian-markdown` | Creates or edits Obsidian Flavored Markdown |
 | Chaining | bounded child-agent chain | `@Sorter Triage my inbox` (with notes present that mention a new project) | Sorter files notes, then dispatcher signals Architect to create the new project folder; child returns to root before Architect runs |
 | MCP | MCP visibility | `codex -C <vault> mcp list` | Lists the MCP servers configured in `.codex/config.toml`, or shows the auth/setup state for each server |
 
@@ -165,6 +170,7 @@ Expected output references:
 - `AGENTS.md` (the dispatcher)
 - `.codex/agents` path (custom agents)
 - `.agents/skills` path (repo skills)
+- bundled resources such as `.agents/skills/json-canvas/references/EXAMPLES.md`
 
 ### Running the MCP visibility smoke
 
@@ -188,6 +194,7 @@ Expected: lists MCP servers from `.codex/config.toml` (e.g., `Gmail`, `Calendar`
 
 - Verify `.agents/skills/` exists in your vault root and contains subdirectories.
 - Skills must be at the vault root level: `<vault>/.agents/skills/<skill-name>/`
+- Each installed skill keeps its full bundle. For example, verify `.agents/skills/json-canvas/references/EXAMPLES.md` exists after installing or updating.
 
 ### Child agent chain does not return to root
 

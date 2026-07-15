@@ -60,7 +60,7 @@ last-run: "{{ISO timestamp}}"
 
 When the user says "edit my agent", "update agent X", "modify agent X", or equivalents:
 
-1. **Identify the agent.** If the user specifies a name, read `.claude/agents/{name}.md`. If the name is ambiguous or not provided, read `.claude/references/agents-registry.md` and ask the user which agent they mean using `AskUserQuestion`.
+1. **Identify the agent.** If the user specifies a name, read `.codex/agents/{name}.toml`. If the name is ambiguous or not provided, read `.codex/references/agents-registry.md` and ask the user which agent they mean using ask the user.
 
 2. **Show current configuration.** Present the agent's current setup to the user in a readable format:
    - Name and description
@@ -71,7 +71,7 @@ When the user says "edit my agent", "update agent X", "modify agent X", or equiv
    - Agent coordination rules
    - First-run setup
 
-3. **Ask what to change.** Use `AskUserQuestion` to ask the user what they want to modify. Common changes:
+3. **Ask what to change.** Use ask the user to ask the user what they want to modify. Common changes:
    - Update trigger phrases
    - Change permissions (add/remove tools)
    - Modify output format or templates
@@ -79,11 +79,11 @@ When the user says "edit my agent", "update agent X", "modify agent X", or equiv
    - Change description
    - Add new capabilities
 
-4. **Apply changes.** Modify the agent file at `.claude/agents/{name}.md` with the requested changes.
+4. **Apply changes.** Modify the agent file at `.codex/agents/{name}.toml` with the requested changes.
 
-5. **Update the registry.** If the change affects the agent's description, triggers, or capabilities, update the corresponding row in `.claude/references/agents-registry.md`. Custom agent rows live between the `<!-- MBIFC:CUSTOM_AGENTS_START -->` and `<!-- MBIFC:CUSTOM_AGENTS_END -->` markers — edit only within that block.
+5. **Update the registry.** If the change affects the agent's description, triggers, or capabilities, update the corresponding row in `.codex/references/agents-registry.md`. Custom agent rows live between the `<!-- MBIFC:CUSTOM_AGENTS_START -->` and `<!-- MBIFC:CUSTOM_AGENTS_END -->` markers — edit only within that block.
 
-6. **Update agents.md.** If the change affects the agent's role description, update `.claude/references/agents.md`.
+6. **Update agents.md.** If the change affects the agent's role description, update `.codex/references/agents.md`.
 
 7. **Log the change** in `{{meta}}/agent-log.md`.
 
@@ -95,15 +95,15 @@ When the user says "edit my agent", "update agent X", "modify agent X", or equiv
 
 When the user says "remove agent", "delete agent X", "rimuovi agente", or equivalents:
 
-1. **Identify the agent.** If the user specifies a name, locate `.claude/agents/{name}.md`. If not provided, read `.claude/references/agents-registry.md` and ask the user which agent to remove using `AskUserQuestion`.
+1. **Identify the agent.** If the user specifies a name, locate `.codex/agents/{name}.toml`. If not provided, read `.codex/references/agents-registry.md` and ask the user which agent to remove using ask the user.
 
-2. **Ask for confirmation.** Use `AskUserQuestion` to confirm:
+2. **Ask for confirmation.** Use ask the user to confirm:
    > "Are you sure you want to remove the agent `{name}`? This will delete its file and deactivate it. This action cannot be undone."
 
 3. **If confirmed:**
-   - Delete the agent file from `.claude/agents/{name}.md`
-   - Update `.claude/references/agents-registry.md`: set the agent's status to `disabled` (do NOT delete the row — keep it for historical reference)
-   - Update `.claude/references/agents.md`: remove or mark the agent's section as disabled under "Custom Agents"
+   - Delete the agent file from `.codex/agents/{name}.toml`
+   - Update `.codex/references/agents-registry.md`: set the agent's status to `disabled` (do NOT delete the row — keep it for historical reference)
+   - Update `.codex/references/agents.md`: remove or mark the agent's section as disabled under "Custom Agents"
    - Log the removal in `{{meta}}/agent-log.md`
 
 4. **If not confirmed:** acknowledge and do nothing.
@@ -116,7 +116,7 @@ When the user says "remove agent", "delete agent X", "rimuovi agente", or equiva
 
 When the user says "list agents", "show my agents", "lista agenti", "see my agents", or equivalents:
 
-1. **Read `.claude/references/agents-registry.md`** to get the full list of agents (core + custom).
+1. **Read `.codex/references/agents-registry.md`** to get the full list of agents (core + custom).
 
 2. **Present the list** to the user in a clear format, organized by type:
 
@@ -138,3 +138,9 @@ When the user says "list agents", "show my agents", "lista agenti", "see my agen
 - **Always preserve the Inter-Agent Coordination section** when editing — it is mandatory for every agent.
 - **Always update the registry and agents.md** when making any change to an agent.
 - **Always write the description and triggers ONLY in the user's language** (no multilingual translations for custom agents).
+
+## Codex Conversation Flow
+
+- Ask one direct plain-text question when clarification is required.
+- Wait for the user's reply before continuing.
+- Resume from the saved state file if the flow is already active.

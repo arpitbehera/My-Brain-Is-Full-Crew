@@ -11,3 +11,5 @@ Test-SecondBrain/
 .mcp.json
 # GSD planning artifacts (internal workflow — not for upstream)
 .planning/
+# Superpowers design and implementation artifacts
+docs/superpowers/

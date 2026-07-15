@@ -104,12 +104,12 @@ All agents read `Meta/user-profile.md` for personalization. This file is created
 
 ## Skills
 
-Skills handle complex, multi-step workflows that were extracted from agents for better performance. They run in the main conversation context (not as subprocesses), which allows multi-turn conversations.
+Skills provide focused workflows and domain knowledge. Agent-derived skills handle complex, multi-step conversations; Obsidian toolkit skills handle web extraction and native vault formats. All run in the main conversation context rather than as subprocesses.
 
 The dispatcher routes triggers to skills FIRST, then falls through to agents.
 
-| Skill | Source Agent | Purpose |
-|-------|-------------|---------|
+| Skill | Source | Purpose |
+|-------|--------|---------|
 | `/onboarding` | Architect | Full vault setup conversation |
 | `/create-agent` | Architect | Custom agent creation (6-phase interview) |
 | `/manage-agent` | Architect | Edit, remove, list custom agents |
@@ -123,6 +123,14 @@ The dispatcher routes triggers to skills FIRST, then falls through to agents.
 | `/deep-clean` | Librarian | Extended vault cleanup |
 | `/tag-garden` | Librarian | Tag analysis and gardening |
 | `/inbox-triage` | Sorter | Inbox note processing and routing |
+| `/contact-sync` | Postman | Apple Contacts synchronization |
+| `/defuddle` | Obsidian toolkit | Clean Markdown extraction from web pages |
+| `/json-canvas` | Obsidian toolkit | Obsidian JSON Canvas creation and editing |
+| `/obsidian-bases` | Obsidian toolkit | Obsidian Bases creation and editing |
+| `/obsidian-cli` | Obsidian toolkit | Vault operations through a running Obsidian instance |
+| `/obsidian-markdown` | Obsidian toolkit | Obsidian Flavored Markdown creation and editing |
+
+`/defuddle` requires Defuddle CLI. `/obsidian-cli` requires Obsidian CLI and a running Obsidian instance. Adapters preserve each skill's bundled references and other supported resources.
 
 ---
 

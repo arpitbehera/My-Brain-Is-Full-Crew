@@ -64,10 +64,10 @@ Custom agents always have lower routing priority than the 8 core agents. The dis
 
 ## Skills Registry
 
-Skills handle complex, multi-step workflows extracted from agents. They are checked **before** agents by the dispatcher (higher priority). Skills run in the main conversation context via the Skill tool, preserving multi-turn state.
+Skills provide focused workflows and domain knowledge. They are checked **before** agents by the dispatcher (higher priority) and run in the main conversation context via the Skill tool.
 
-| Skill | Source Agent | Triggers | Purpose | Status |
-|-------|-------------|----------|---------|--------|
+| Skill | Source | Triggers | Purpose | Status |
+|-------|--------|----------|---------|--------|
 | `/onboarding` | architect | "initialize the vault", "set up the vault", "onboarding", "vault setup" | Full vault setup conversation | active |
 | `/create-agent` | architect | "create a new agent", "custom agent", "I need a new agent", "build an agent", "new crew member" | Custom agent creation (6-phase interview) | active |
 | `/manage-agent` | architect | "edit my agent", "update agent", "remove agent", "delete agent", "list agents", "show my agents" | Edit, remove, list custom agents | active |
@@ -82,6 +82,11 @@ Skills handle complex, multi-step workflows extracted from agents. They are chec
 | `/tag-garden` | librarian | "tag garden", "clean up tags", "tag cleanup", "tag audit" | Tag analysis: unused, orphan, near-duplicates | active |
 | `/inbox-triage` | sorter | "triage the inbox", "clean up the inbox", "sort my notes", "empty inbox", "file my notes", "process the inbox" | Inbox note processing, classification, and routing | active |
 | `/contact-sync` | postman | "sync contact", "add to contacts", "save contact", "update contact", "is this person in my contacts" | Sync person to Apple Contacts (search, create, update). Requires `apple-contacts` MCP. | active |
+| `/defuddle` | Obsidian toolkit | URL to read or analyze, online docs, articles, standard web pages | Extract clean Markdown with Defuddle CLI. Reports install guidance when CLI is missing. | active |
+| `/json-canvas` | Obsidian toolkit | `.canvas`, Canvas file, mind map, visual canvas | Create and edit Obsidian JSON Canvas files. | active |
+| `/obsidian-bases` | Obsidian toolkit | `.base`, Bases, table/card/list/map view, filters, formulas | Create and edit Obsidian Bases. | active |
+| `/obsidian-cli` | Obsidian toolkit | use Obsidian CLI, search/manage vault, reload or debug plugin | Operate through Obsidian CLI. Requires a running Obsidian instance. | active |
+| `/obsidian-markdown` | Obsidian toolkit | Obsidian note, wikilink, embed, callout, properties, tags | Create and edit Obsidian Flavored Markdown. | active |
 
 ### How Skills Are Routed
 

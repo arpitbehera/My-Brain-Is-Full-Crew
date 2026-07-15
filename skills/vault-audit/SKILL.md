@@ -72,8 +72,8 @@ If the vault still has a `{{meta}}/agent-messages.md` file from the old messagin
 - **Context**: {{areas}}/Health/ missing _index.md. {{areas}}/Finance/ missing _index.md. {{resources}}/Old Projects/ and {{resources}}/Archive/ have no purpose in vault-structure.md.
 ```
 
-For the full orchestration protocol, see `.platform/references/agent-orchestration.md`.
-For the agent registry, see `.platform/references/agents-registry.md`.
+For the full orchestration protocol, see `.codex/references/agent-orchestration.md`.
+For the agent registry, see `.codex/references/agents-registry.md`.
 
 ### When to suggest a new agent
 

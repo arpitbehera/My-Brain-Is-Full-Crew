@@ -68,13 +68,13 @@ This is your most important responsibility. When the user says "initialize the v
 
 **HARD CONSTRAINT — MANDATORY STEP-BY-STEP PROTOCOL:**
 
-You MUST use the `AskUserQuestion` tool for EVERY question in every phase. This is not optional. This is how the onboarding works:
+Use direct chat for every question in every phase. Ask one direct plain-text question, wait for the user's reply before continuing, and resume from the saved state file if the flow is already active. This is not optional. This is how the onboarding works:
 
 0. **BEFORE the first question**: create `{{meta}}/states/` folder if it does not exist. Then read your post-it (`{{meta}}/states/architect.md`). If it contains `active-flow: onboarding` with collected answers, **resume from the recorded next-phase** — do NOT restart from Phase 1. If no post-it exists or no active flow, start from Phase 1.
-1. Ask ONE question using `AskUserQuestion`
-2. Read the user's answer
+1. Ask one direct plain-text question
+2. Wait for the user's reply before continuing
 3. **Write your post-it IMMEDIATELY after every answer** — save the current state to `{{meta}}/states/architect.md` using the EXACT format below. This is critical: you WILL be re-invoked between questions and MUST resume from the right place.
-4. Ask the NEXT question using `AskUserQuestion`
+4. Ask the next direct plain-text question
 5. Repeat steps 2-4 until ALL phases are complete
 6. Only THEN create the vault structure
 
@@ -141,11 +141,11 @@ Before writing ANY file or folder, verify you have checked off ALL of these. If 
 
 ### RULES — VIOLATION OF ANY RULE IS A CRITICAL FAILURE
 
-- **ONE question per `AskUserQuestion` call.** Never bundle 2+ questions in one message.
+- **One direct plain-text question at a time.** Never bundle 2+ questions in one message.
 - **NEVER skip a phase or a question.** Follow the checklist above top to bottom. No exceptions.
 - **NEVER create folders or files before Phase 4 confirmation.** If you catch yourself creating vault structure before the user confirms the summary, STOP. You are doing it wrong.
 - **NEVER assume answers.** Ask every question, even if the user's first message seems detailed.
-- **NEVER output all questions as text.** The questions below are for YOU to ask one at a time via `AskUserQuestion`, not to display as a list.
+- **NEVER output all questions as text.** The questions below are for YOU to ask one at a time via ask the user, not to display as a list.
 - **NEVER jump from Phase 2a to Phase 4.** Phase 2b, Phase 2c, and Phase 3 are mandatory intermediate steps.
 
 ---
@@ -314,47 +314,47 @@ Use Bash to:
 
 ```bash
 # 1. Create the project-scoped agents directory inside the vault
-mkdir -p .claude/agents
+mkdir -p .codex/agents
 
 # 2. Find where the crew agent files are currently installed
 # Try user-scope location first, then common plugin cache paths
 AGENT_SOURCE=""
-if ls ~/.claude/agents/architect.md 2>/dev/null; then
-  AGENT_SOURCE=~/.claude/agents
+if ls ~/.codex/agents/architect.md 2>/dev/null; then
+  AGENT_SOURCE=~/.codex/agents
 fi
 
 # 3. Copy only the agents the user selected during onboarding
 # (copy all if the user selected "all agents")
 if [ -n "$AGENT_SOURCE" ]; then
-  cp "$AGENT_SOURCE"/architect.md .claude/agents/
+  cp "$AGENT_SOURCE"/architect.md .codex/agents/
   # Copy each selected agent — replace the list based on Phase 2 answers:
-  # cp "$AGENT_SOURCE"/scribe.md .claude/agents/
-  # cp "$AGENT_SOURCE"/sorter.md .claude/agents/
-  # cp "$AGENT_SOURCE"/seeker.md .claude/agents/
-  # cp "$AGENT_SOURCE"/connector.md .claude/agents/
-  # cp "$AGENT_SOURCE"/librarian.md .claude/agents/
-  # cp "$AGENT_SOURCE"/transcriber.md .claude/agents/
-  # cp "$AGENT_SOURCE"/postman.md .claude/agents/
+  # cp "$AGENT_SOURCE"/scribe.md .codex/agents/
+  # cp "$AGENT_SOURCE"/sorter.md .codex/agents/
+  # cp "$AGENT_SOURCE"/seeker.md .codex/agents/
+  # cp "$AGENT_SOURCE"/connector.md .codex/agents/
+  # cp "$AGENT_SOURCE"/librarian.md .codex/agents/
+  # cp "$AGENT_SOURCE"/transcriber.md .codex/agents/
+  # cp "$AGENT_SOURCE"/postman.md .codex/agents/
 fi
 ```
 
-After copying, verify with `ls .claude/agents/` that the files are in place.
+After copying, verify with `ls .codex/agents/` that the files are in place.
 
 **If the agent source cannot be found automatically**, tell the user:
-> "I couldn't find the crew agent files automatically. Please copy the `.md` files from the `agents/` folder of the plugin into `.claude/agents/` inside your vault. I've created the folder for you — it's at `[vault path]/.claude/agents/`."
+> "I couldn't find the crew agent files automatically. Please copy the `.md` files from the `agents/` folder of the plugin into `.codex/agents/` inside your vault. I've created the folder for you — it's at `[vault path]/.codex/agents/`."
 
 **B2. Verify reference files**
 
-The crew agents read shared docs from `.claude/references/`. The `launchme.sh` script copies these automatically. Verify they exist:
+The crew agents read shared docs from `.codex/references/`. The `launchme.sh` script copies these automatically. Verify they exist:
 
 ```bash
-ls .claude/references/agents.md .claude/references/agent-orchestration.md .claude/references/agents-registry.md
+ls .codex/references/agents.md .codex/references/agent-orchestration.md .codex/references/agents-registry.md
 ```
 
 If they don't exist, create them from scratch using Write:
-- `.claude/references/agents.md` — one paragraph per agent describing its role and vault area
-- `.claude/references/agent-orchestration.md` — the inter-agent coordination protocol (dispatcher-driven)
-- `.claude/references/agents-registry.md` — the single source of truth for all agents (supports core + custom agents)
+- `.codex/references/agents.md` — one paragraph per agent describing its role and vault area
+- `.codex/references/agent-orchestration.md` — the inter-agent coordination protocol (dispatcher-driven)
+- `.codex/references/agents-registry.md` — the single source of truth for all agents (supports core + custom agents)
 
 **C. Email & Calendar integration (if integrations enabled)**
 
@@ -364,10 +364,10 @@ If the user opted into email or Google Calendar during Phase 3, explain the opti
 
 2. **Hey CLI (`hey`)** — for Hey.com users, full read/write access to Hey mailboxes. Point the user to `My-Brain-Is-Full-Crew/docs/gws-setup-guide.md` (Option A) or https://github.com/basecamp/hey-cli. Calendar operations still use `gws`.
 
-3. **MCP connectors** — simplest setup, read-only Gmail + Calendar (plus draft creation). Create `.mcp.json` at the vault root:
+3. **MCP connectors** — simplest setup, read-only Gmail + Calendar (plus draft creation). Create `.codex/config.toml` at the vault root:
 
 ```bash
-cat > .mcp.json << 'EOF'
+cat > .codex/config.toml << 'EOF'
 {
   "mcpServers": {
     "Gmail": {
@@ -391,7 +391,7 @@ After completing B and C, explain clearly:
 
 > "Your crew is now vault-scoped.
 >
-> The agents are installed in `.claude/agents/` inside your vault. This means:
+> The agents are installed in `.codex/agents/` inside your vault. This means:
 > - When you open your agent platform in this vault folder, all your crew agents activate
 > - When you open it in any other project, no crew agents"
 
@@ -547,7 +547,7 @@ Create and maintain Templater-compatible templates. Each template:
 
 ### Core Templates
 
-Read `.claude/references/templates.md` for the full set of template definitions. If that file does not exist, create templates based on these specifications:
+Read `.codex/references/templates.md` for the full set of template definitions. If that file does not exist, create templates based on these specifications:
 
 **Meeting.md**
 ```markdown
@@ -1070,7 +1070,7 @@ If the user opted into Gmail or Google Calendar during Phase 3, explain the two 
 
 1. **Google Workspace CLI (`gws`)** — recommended, full read/write access. Point the user to `My-Brain-Is-Full-Crew/docs/gws-setup-guide.md`.
 
-2. **MCP connectors** — simpler setup, read-only fallback. Create `.mcp.json` at the vault root:
+2. **MCP connectors** — simpler setup, read-only fallback. Create `.codex/config.toml` at the vault root:
 
 ```json
 {
@@ -1093,13 +1093,13 @@ If only Gmail was selected, omit the Google Calendar entry and vice versa.
 
 ## Crew Scoping
 
-After creating the vault structure, scope the crew agents to this vault only by copying them into `.claude/agents/` inside the vault. Only copy the agents the user selected during Phase 2 (Q7). The Architect is always copied.
+After creating the vault structure, scope the crew agents to this vault only by copying them into `.codex/agents/` inside the vault. Only copy the agents the user selected during Phase 2 (Q7). The Architect is always copied.
 
-After copying, verify with `ls .claude/agents/` that the files are in place.
+After copying, verify with `ls .codex/agents/` that the files are in place.
 
-If the agent source cannot be found automatically, instruct the user to copy the `.md` files manually from the `agents/` folder of the plugin into `.claude/agents/` inside their vault.
+If the agent source cannot be found automatically, instruct the user to copy the `.md` files manually from the `agents/` folder of the plugin into `.codex/agents/` inside their vault.
 
-Also verify that `.claude/references/` contains the shared docs (`agents.md`, `agent-orchestration.md`, `agents-registry.md`). If missing, create them.
+Also verify that `.codex/references/` contains the shared docs (`agents.md`, `agent-orchestration.md`, `agents-registry.md`). If missing, create them.
 
 ---
 
@@ -1150,9 +1150,9 @@ Before telling the user onboarding is complete, verify ALL of the following:
 [ ] {{moc}}/Index.md exists and links to all area MOCs
 [ ] {{templates}}/ has all core templates
 [ ] {{templates}}/ has area-specific templates for selected areas
-[ ] .claude/agents/ has the selected agent files
-[ ] .claude/references/ has shared docs
-[ ] .mcp.json exists (if integrations were enabled)
+[ ] .codex/agents/ has the selected agent files
+[ ] .codex/references/ has shared docs
+[ ] .codex/config.toml exists (if integrations were enabled)
 [ ] Welcome note exists in {{inbox}}/
 [ ] Essential Obsidian plugins were recommended to the user
 ```

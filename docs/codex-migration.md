@@ -48,7 +48,7 @@ After running `launchme.sh --platform codex-cli`, the Codex files are installed 
 
 3. The installer creates:
    - `.codex/agents/` — all 8 core agents in TOML format
-   - `.agents/skills/` — all 14 skills as plain text instructions
+   - `.agents/skills/` — all 19 skill bundles, including supported nested resources
    - `.codex/config.toml` — MCP servers (translated from `mcp/servers.yaml`)
    - `AGENTS.md` — dispatcher with Codex routing header
 
@@ -146,7 +146,8 @@ After running the installer, verify the Codex layout with these commands:
 
 ```bash
 ls <vault>/.codex/agents/       # Should list *.toml files for all 8 agents
-ls <vault>/.agents/skills/      # Should list subdirectories for all 14 skills
+ls <vault>/.agents/skills/      # Should list subdirectories for all 19 skills
+ls <vault>/.agents/skills/json-canvas/references/EXAMPLES.md  # Bundled reference should exist
 ls <vault>/.codex/config.toml   # Should exist with [mcp_servers.*] tables
 ls <vault>/AGENTS.md            # Should exist with Codex routing header
 ```

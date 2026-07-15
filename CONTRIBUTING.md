@@ -191,13 +191,15 @@ Every adapter is a single file at `adapters/<platform-name>/adapter.sh` that imp
 |----------|---------------|
 | `adapter_translate_dispatcher(src, dst)` | Copy `DISPATCHER.md` to the platform's dispatcher filename |
 | `adapter_translate_references(src, dst)` | Copy reference `.md` files to the platform's references directory |
-| `adapter_translate_skills(src, dst)` | Copy skill `SKILL.md` files to the platform's skills directory |
+| `adapter_translate_skills(src, dst)` | Copy supported skill bundles to the platform's skills directory, preserving allowed resources |
 | `adapter_translate_agents(src, dst)` | Translate agent frontmatter (capabilities → tools/permissions, model → native name) and write to agents directory |
 | `adapter_translate_hooks(src, dst)` | Copy hook scripts and generate platform-native hook configuration (settings.json, JS plugin, etc.) |
 | `adapter_translate_mcp(src, dst)` | Read `mcp/servers.yaml` and write platform-native MCP config |
 | `adapter_finalize(src, dst)` | Any final assembly (e.g., merging multiple config files into one) |
 
 The entry point is `adapter_build(src, dst)` which calls all seven functions in order.
+
+Skill directories are bundles, not single files. Adapters must use `copy_skill_bundle` from `adapters/lib.sh` so `SKILL.md` and optional `scripts/`, `references/`, `assets/`, and `agents/openai.yaml` resources stay together. The helper rejects symlinked sources and ignores unsupported directories. After copying, rewrite platform-neutral paths throughout the bundle with `rewrite_skill_bundle_platform_paths` (or the platform's equivalent full-tree rewrite helper).
 
 ### How to add a new platform
 
@@ -215,7 +217,7 @@ The entry point is `adapter_build(src, dst)` which calls all seven functions in 
 
 5. **Verify**: `bash scripts/build.sh --platform <name>` should produce a complete `dist/<name>/` tree. Check that no `.platform/` or `DISPATCHER.md` placeholders leak into the output.
 
-The shared library `adapters/lib.sh` provides parsing helpers (`parse_frontmatter`, `parse_capabilities`, `should_include`, `parse_hook_yaml`, `agent_body`, `enumerate_agents`, `enumerate_hooks`) and the `rewrite_platform_paths` function. Your adapter sources this automatically via `scripts/build.sh`.
+The shared library `adapters/lib.sh` provides parsing helpers (`parse_frontmatter`, `parse_capabilities`, `should_include`, `parse_hook_yaml`, `agent_body`, `enumerate_agents`, `enumerate_hooks`), skill-bundle helpers (`copy_skill_bundle`, `rewrite_skill_bundle_platform_paths`), and `rewrite_platform_paths`. Your adapter sources this automatically via `scripts/build.sh`.
 
 Look at `adapters/claude-code/adapter.sh` or `adapters/gemini-cli/adapter.sh` as reference implementations.
 
